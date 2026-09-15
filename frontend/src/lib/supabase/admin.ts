@@ -1,16 +1,20 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
 let cachedAdminClient: SupabaseClient | null = null
+let cachedAdminKey: string | null = null
 
 export function getAdminSupabase(): SupabaseClient {
-  if (cachedAdminClient) return cachedAdminClient
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
   const apiKey =
     process.env.SUPABASE_SERVICE_ROLE_KEY ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
     'placeholder-key'
 
+  if (cachedAdminClient && cachedAdminKey === `${supabaseUrl}:${apiKey}`) {
+    return cachedAdminClient
+  }
+
+  cachedAdminKey = `${supabaseUrl}:${apiKey}`
   cachedAdminClient = createClient(supabaseUrl, apiKey, {
     auth: {
       autoRefreshToken: false,

@@ -20,7 +20,23 @@ export async function PATCH(
       return jsonError('User ID is required', 400)
     }
 
-    // Try updating using adminSupabase first (uses service role key if configured)
+    // 1. Fetch user info from auth.admin if available to ensure we have name and confirm email
+    let userName = 'Student'
+    try {
+      const { data: authUserData } = await adminSupabase.auth.admin.getUserById(userId)
+      if (authUserData?.user) {
+        userName = (authUserData.user.user_metadata?.full_name as string) || authUserData.user.email?.split('@')[0] || 'Student'
+        await adminSupabase.auth.admin.updateUserById(userId, {
+          email_confirm: true,
+          user_metadata: { ...(authUserData.user.user_metadata || {}), is_verified: true },
+          app_metadata: { ...(authUserData.user.app_metadata || {}), is_verified: true }
+        })
+      }
+    } catch (authErr) {
+      console.warn('Note: Could not update auth.users metadata:', authErr)
+    }
+
+    // 2. Update existing profile or upsert if missing
     let { data: profile, error } = await adminSupabase
       .from('profiles')
       .update({ is_verified: true })
@@ -28,8 +44,25 @@ export async function PATCH(
       .select()
       .maybeSingle()
 
-    // If adminSupabase returned null/error, try with getDbClient
-    if (!profile) {
+    if (!profile && !error) {
+      // If row did not exist, upsert it
+      const upsertRes = await adminSupabase
+        .from('profiles')
+        .upsert({
+          id: userId,
+          full_name: userName,
+          role: 'student',
+          is_verified: true,
+        }, { onConflict: 'id' })
+        .select()
+        .maybeSingle()
+
+      profile = upsertRes.data
+      error = upsertRes.error
+    }
+
+    // 3. Fallback to getDbClient with request credentials if adminSupabase errored
+    if (!profile && error) {
       const db = await getDbClient(request)
       const res = await db
         .from('profiles')
@@ -46,30 +79,16 @@ export async function PATCH(
       }
     }
 
-    // Also attempt email confirmation in Supabase auth.users
-    try {
-      await adminSupabase.auth.admin.updateUserById(userId, {
-        email_confirm: true,
-      })
-    } catch (authErr) {
-      console.warn('Note: Could not confirm auth.users email:', authErr)
-    }
-
     if (error) {
       console.error('Error verifying user profile:', error)
       return jsonError(error.message || 'Failed to verify user in database. Ensure RLS policies or Service Role Key are configured.', 500)
     }
 
     if (!profile) {
-      // Check if profile exists
-      const { data: existing } = await adminSupabase.from('profiles').select('id, full_name').eq('id', userId).maybeSingle()
-      if (!existing) {
-        return jsonError('User profile not found in database', 404)
-      }
-      return jsonError('Failed to update verification status in database. Supabase Row Level Security (RLS) blocked the update. Please run the provided SQL policy in Supabase or set SUPABASE_SERVICE_ROLE_KEY in .env.local.', 403)
+      return jsonError('User profile could not be updated in database.', 400)
     }
 
-    return NextResponse.json({ message: `${profile.full_name || 'User'} verified`, profile })
+    return NextResponse.json({ message: `${profile.full_name || 'User'} verified successfully`, profile })
   } catch (err) {
     console.error('Unexpected error verifying user:', err)
     return jsonError('Internal server error', 500)

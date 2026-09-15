@@ -220,9 +220,12 @@ export default function AdminDashboard() {
         try {
             await api.patch(`/admin/users/${id}/verify`)
             showToast(`${name || 'User'} has been verified!`, "success")
+            setUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: true } : u))
             fetchUsers()
-        } catch (err) {
-            showToast("Failed to verify user", "error")
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { detail?: string; error?: string } } }
+            const msg = axiosErr?.response?.data?.detail || axiosErr?.response?.data?.error || "Failed to verify user"
+            showToast(msg, "error")
         }
     }
 
@@ -236,9 +239,12 @@ export default function AdminDashboard() {
                 try {
                     await api.patch(`/admin/users/${id}/reject`)
                     showToast(`Verification revoked for ${name || 'User'}`, "info")
+                    setUsers(prev => prev.map(u => u.id === id ? { ...u, is_verified: false } : u))
                     fetchUsers()
-                } catch (err) {
-                    showToast("Failed to revoke verification", "error")
+                } catch (err: unknown) {
+                    const axiosErr = err as { response?: { data?: { detail?: string; error?: string } } }
+                    const msg = axiosErr?.response?.data?.detail || axiosErr?.response?.data?.error || "Failed to revoke verification"
+                    showToast(msg, "error")
                 }
                 setConfirmDialog(prev => ({ ...prev, show: false }))
             }

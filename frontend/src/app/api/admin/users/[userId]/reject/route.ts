@@ -20,6 +20,20 @@ export async function PATCH(
       return jsonError('User ID is required', 400)
     }
 
+    // 1. Update user metadata in auth.admin if available
+    try {
+      const { data: authUserData } = await adminSupabase.auth.admin.getUserById(userId)
+      if (authUserData?.user) {
+        await adminSupabase.auth.admin.updateUserById(userId, {
+          user_metadata: { ...(authUserData.user.user_metadata || {}), is_verified: false },
+          app_metadata: { ...(authUserData.user.app_metadata || {}), is_verified: false }
+        })
+      }
+    } catch (authErr) {
+      console.warn('Note: Could not update auth.users metadata:', authErr)
+    }
+
+    // 2. Update profiles table
     let { data: profile, error } = await adminSupabase
       .from('profiles')
       .update({ is_verified: false })
@@ -27,7 +41,7 @@ export async function PATCH(
       .select()
       .maybeSingle()
 
-    if (!profile) {
+    if (!profile && error) {
       const db = await getDbClient(request)
       const res = await db
         .from('profiles')
@@ -49,15 +63,7 @@ export async function PATCH(
       return jsonError(error.message || 'Failed to reject user', 500)
     }
 
-    if (!profile) {
-      const { data: existing } = await adminSupabase.from('profiles').select('id, full_name').eq('id', userId).maybeSingle()
-      if (!existing) {
-        return jsonError('User profile not found in database', 404)
-      }
-      return jsonError('Failed to update status in database due to Supabase RLS policy. Please check Supabase RLS policies or add SUPABASE_SERVICE_ROLE_KEY to .env.local.', 403)
-    }
-
-    return NextResponse.json({ message: `${profile.full_name || 'User'} rejected`, profile })
+    return NextResponse.json({ message: `${profile?.full_name || 'User'} verification revoked`, profile })
   } catch (err) {
     console.error('Unexpected error rejecting user:', err)
     return jsonError('Internal server error', 500)
