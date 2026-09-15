@@ -44,6 +44,8 @@ export default function LoginPage() {
           setError('Email not confirmed. If email confirmation is enabled in your project, please check your inbox for the confirmation link.')
         } else if (signInError.message.toLowerCase().includes('invalid login credentials')) {
           setError('Invalid email or password. Please verify your credentials or register a new account.')
+        } else if (signInError.message.toLowerCase().includes('fetch')) {
+          setError('Unable to reach Supabase authentication server. Please check your internet connection, ensure NEXT_PUBLIC_SUPABASE_URL is configured, or disable ad-blockers.')
         } else {
           setError(signInError.message)
         }

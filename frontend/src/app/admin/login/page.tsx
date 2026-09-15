@@ -36,7 +36,13 @@ export default function AdminLogin() {
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (authError) {
-        setError(authError.message)
+        if (authError.message.toLowerCase().includes('fetch')) {
+          setError('Unable to reach Supabase authentication server. Please verify NEXT_PUBLIC_SUPABASE_URL in your environment variables or check your network.')
+        } else if (authError.message.toLowerCase().includes('invalid login credentials')) {
+          setError('Invalid email or password. Please verify your admin credentials.')
+        } else {
+          setError(authError.message)
+        }
         setLoading(false)
         return
       }
