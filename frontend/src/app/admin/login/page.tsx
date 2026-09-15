@@ -31,11 +31,20 @@ export default function AdminLogin() {
     setLoading(true)
     setError('')
 
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      setError('Configuration Error: NEXT_PUBLIC_SUPABASE_URL is not configured. If running locally, please restart your dev server (Ctrl+C and npm run dev) so .env.local is loaded.')
+      setLoading(false)
+      return
+    }
+
     try {
+      console.log('Admin authenticating with Supabase at:', supabaseUrl)
       // Step 1: Authenticate with Supabase
       const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
       if (authError) {
+        console.error('Supabase Auth error:', authError)
         if (authError.message.toLowerCase().includes('fetch')) {
           setError('Unable to reach Supabase authentication server. Please verify NEXT_PUBLIC_SUPABASE_URL in your environment variables or check your network.')
         } else if (authError.message.toLowerCase().includes('invalid login credentials')) {

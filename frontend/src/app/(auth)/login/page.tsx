@@ -37,15 +37,25 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl || supabaseUrl.includes('placeholder')) {
+      setError('Configuration Error: NEXT_PUBLIC_SUPABASE_URL is not configured. If running locally, please restart your dev server (Ctrl+C and npm run dev) so .env.local is loaded.')
+      setLoading(false)
+      return
+    }
+
     try {
+      console.log('Authenticating with Supabase at:', supabaseUrl)
       const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
       if (signInError) {
+        console.error('Supabase Auth error:', signInError)
         if (signInError.message.toLowerCase().includes('email not confirmed')) {
           setError('Email not confirmed. If email confirmation is enabled in your project, please check your inbox for the confirmation link.')
         } else if (signInError.message.toLowerCase().includes('invalid login credentials')) {
           setError('Invalid email or password. Please verify your credentials or register a new account.')
         } else if (signInError.message.toLowerCase().includes('fetch')) {
-          setError('Unable to reach Supabase authentication server. Please check your internet connection, ensure NEXT_PUBLIC_SUPABASE_URL is configured, or disable ad-blockers.')
+          setError('Unable to reach Supabase authentication server. Please check your internet connection, ensure NEXT_PUBLIC_SUPABASE_URL is configured in your environment, or disable ad-blockers.')
         } else {
           setError(signInError.message)
         }
