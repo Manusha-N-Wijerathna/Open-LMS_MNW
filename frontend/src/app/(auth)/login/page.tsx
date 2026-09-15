@@ -47,7 +47,8 @@ export default function LoginPage() {
 
     try {
       console.log('Authenticating with Supabase at:', supabaseUrl)
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+      const cleanEmail = email.trim().toLowerCase()
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
       if (signInError) {
         console.error('Supabase Auth error:', signInError)
         if (signInError.message.toLowerCase().includes('email not confirmed')) {

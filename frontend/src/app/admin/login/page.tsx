@@ -40,8 +40,9 @@ export default function AdminLogin() {
 
     try {
       console.log('Admin authenticating with Supabase at:', supabaseUrl)
+      const cleanEmail = email.trim().toLowerCase()
       // Step 1: Authenticate with Supabase
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      const { error: authError } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
 
       if (authError) {
         console.error('Supabase Auth error:', authError)
