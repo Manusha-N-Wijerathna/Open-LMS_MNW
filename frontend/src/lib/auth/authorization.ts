@@ -8,6 +8,7 @@ export interface UserProfile {
   role: string
   is_verified: boolean
   created_at: string
+  email?: string
 }
 
 const ADMIN_EMAILS = ['manushaugcnuwan@gmail.com']
@@ -69,6 +70,7 @@ export async function getCurrentUser(request: Request) {
       role: isAdminEmail ? 'admin' : 'student',
       is_verified: isAdminEmail ? true : false,
       created_at: user.created_at || new Date().toISOString(),
+      email: user.email,
     }
 
     // Try looking up profile in DB
@@ -90,10 +92,10 @@ export async function getCurrentUser(request: Request) {
             .maybeSingle()
 
           if (updatedProfile) {
-            return { user, profile: updatedProfile as UserProfile }
+            return { user, profile: { ...(updatedProfile as UserProfile), email: user.email } }
           }
         }
-        return { user, profile: profile as UserProfile }
+        return { user, profile: { ...(profile as UserProfile), email: user.email } }
       }
 
       if (profileError) {
@@ -113,7 +115,7 @@ export async function getCurrentUser(request: Request) {
         .maybeSingle()
 
       if (createdProfile) {
-        return { user, profile: createdProfile as UserProfile }
+        return { user, profile: { ...(createdProfile as UserProfile), email: user.email } }
       }
 
       if (insertError) {

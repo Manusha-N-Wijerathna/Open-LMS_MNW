@@ -16,7 +16,8 @@ import {
   Sparkles, 
   Award,
   Layers,
-  Clock
+  Clock,
+  User
 } from 'lucide-react'
 
 interface Grade {
@@ -110,13 +111,26 @@ export default function Dashboard() {
             {/* Top-Right Theme Toggle Button */}
             <ThemeToggle />
 
-            {/* Profile Info Badge */}
-            <div className="flex items-center gap-3 bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-3.5 py-1.5 shadow-sm">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/15 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs">
-                {(profile?.full_name || user?.email || 'S')[0].toUpperCase()}
+            {/* Profile Info Badge (Clickable link to /profile) */}
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-3.5 py-1.5 shadow-sm transition group"
+              title="View and Edit Profile"
+            >
+              <div className="w-8 h-8 rounded-xl overflow-hidden bg-indigo-500/15 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 border border-indigo-500/20">
+                {profile?.avatar_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile?.full_name || 'Profile'}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  (profile?.full_name || user?.email || 'S')[0].toUpperCase()
+                )}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight">
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition leading-tight">
                   {profile?.full_name || user?.email?.split('@')[0]}
                 </p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight truncate max-w-[130px]">
@@ -136,7 +150,7 @@ export default function Dashboard() {
                   <span className="hidden md:inline">Pending</span>
                 </span>
               )}
-            </div>
+            </Link>
 
             {/* Sign Out Button */}
             <button
@@ -170,6 +184,15 @@ export default function Dashboard() {
               <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed">
                 Welcome back. Select your grade curriculum below to access course units, video archives, and study resources.
               </p>
+              <div className="flex items-center gap-3 pt-1">
+                <Link
+                  href="/profile"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 bg-white dark:bg-slate-900/80 hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/[0.08] px-3.5 py-1.5 rounded-xl shadow-xs transition"
+                >
+                  <User className="w-3.5 h-3.5 text-indigo-500" />
+                  <span>Manage Profile</span>
+                </Link>
+              </div>
             </div>
             
             {/* Metrics card */}
