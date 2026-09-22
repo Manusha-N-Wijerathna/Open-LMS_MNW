@@ -68,14 +68,19 @@ export default function AdminDashboard() {
     // Toast Notifications
     const [toasts, setToasts] = useState<Toast[]>([])
 
-    // inline forms state
+    // Grade & Unit Modal State
     const [showAddGrade, setShowAddGrade] = useState(false)
+    const [editingGrade, setEditingGrade] = useState<Grade | null>(null)
     const [newGradeName, setNewGradeName] = useState('')
     const [newGradeOrder, setNewGradeOrder] = useState(0)
 
     const [showAddUnit, setShowAddUnit] = useState(false)
+    const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
     const [newUnitName, setNewUnitName] = useState('')
     const [newUnitOrder, setNewUnitOrder] = useState(0)
+
+    // Content search
+    const [lessonSearchQuery, setLessonSearchQuery] = useState('')
 
     // Lesson Modal State
     const [showLessonModal, setShowLessonModal] = useState(false)
@@ -275,22 +280,45 @@ export default function AdminDashboard() {
     }
 
     // Grade Operations
-    const handleCreateGrade = async (e: React.FormEvent) => {
+    const openCreateGradeModal = () => {
+        setEditingGrade(null)
+        setNewGradeName('')
+        setNewGradeOrder(grades.length + 1)
+        setShowAddGrade(true)
+    }
+
+    const openEditGradeModal = (grade: Grade) => {
+        setEditingGrade(grade)
+        setNewGradeName(grade.name)
+        setNewGradeOrder(grade.display_order)
+        setShowAddGrade(true)
+    }
+
+    const handleSaveGrade = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!newGradeName.trim()) return
         try {
-            const res = await api.post('/admin/grades', {
-                name: newGradeName,
-                display_order: newGradeOrder
-            })
-            showToast(`Grade "${res.data.name}" created!`, "success")
+            if (editingGrade) {
+                const res = await api.put(`/admin/grades/${editingGrade.id}`, {
+                    name: newGradeName,
+                    display_order: newGradeOrder
+                })
+                showToast(`Grade "${res.data.name}" updated!`, "success")
+            } else {
+                const res = await api.post('/admin/grades', {
+                    name: newGradeName,
+                    display_order: newGradeOrder
+                })
+                showToast(`Grade "${res.data.name}" created!`, "success")
+                setSelectedGrade(res.data.id)
+            }
             setNewGradeName('')
             setNewGradeOrder(0)
             setShowAddGrade(false)
+            setEditingGrade(null)
             await fetchGrades()
-            setSelectedGrade(res.data.id)
         } catch (err: any) {
-            showToast(err?.response?.data?.detail || "Failed to create grade", "error")
+            showToast(err?.response?.data?.detail || err?.response?.data?.error || "Failed to save grade", "error")
         }
     }
 
@@ -315,23 +343,47 @@ export default function AdminDashboard() {
     }
 
     // Unit Operations
-    const handleCreateUnit = async (e: React.FormEvent) => {
+    const openCreateUnitModal = () => {
+        setEditingUnit(null)
+        setNewUnitName('')
+        setNewUnitOrder(units.length + 1)
+        setShowAddUnit(true)
+    }
+
+    const openEditUnitModal = (unit: Unit) => {
+        setEditingUnit(unit)
+        setNewUnitName(unit.name)
+        setNewUnitOrder(unit.display_order)
+        setShowAddUnit(true)
+    }
+
+    const handleSaveUnit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (!newUnitName.trim() || selectedGrade === null) return
         try {
-            const res = await api.post('/admin/units', {
-                name: newUnitName,
-                grade_id: selectedGrade,
-                display_order: newUnitOrder
-            })
-            showToast(`Unit "${res.data.name}" created!`, "success")
+            if (editingUnit) {
+                const res = await api.put(`/admin/units/${editingUnit.id}`, {
+                    name: newUnitName,
+                    display_order: newUnitOrder,
+                    grade_id: selectedGrade
+                })
+                showToast(`Unit "${res.data.name}" updated!`, "success")
+            } else {
+                const res = await api.post('/admin/units', {
+                    name: newUnitName,
+                    grade_id: selectedGrade,
+                    display_order: newUnitOrder
+                })
+                showToast(`Unit "${res.data.name}" created!`, "success")
+                setSelectedUnit(res.data.id)
+            }
             setNewUnitName('')
             setNewUnitOrder(0)
             setShowAddUnit(false)
+            setEditingUnit(null)
             await fetchUnits(selectedGrade)
-            setSelectedUnit(res.data.id)
         } catch (err: any) {
-            showToast(err?.response?.data?.detail || "Failed to create unit", "error")
+            showToast(err?.response?.data?.detail || err?.response?.data?.error || "Failed to save unit", "error")
         }
     }
 
@@ -436,6 +488,35 @@ export default function AdminDashboard() {
                 setConfirmDialog(prev => ({ ...prev, show: false }))
             }
         })
+    }
+
+    const handleReorderLesson = async (lesson: Lesson, direction: 'up' | 'down') => {
+        if (selectedUnit === null) return
+        const sorted = [...lessons].sort((a, b) => a.display_order - b.display_order)
+        const index = sorted.findIndex(l => l.id === lesson.id)
+        if (index === -1) return
+        const targetIndex = direction === 'up' ? index - 1 : index + 1
+        if (targetIndex < 0 || targetIndex >= sorted.length) return
+
+        const otherLesson = sorted[targetIndex]
+        const currentOrder = lesson.display_order
+        const otherOrder = otherLesson.display_order
+
+        const newCurrentOrder = currentOrder === otherOrder
+            ? (direction === 'up' ? otherOrder - 1 : otherOrder + 1)
+            : otherOrder
+        const newOtherOrder = currentOrder
+
+        try {
+            await Promise.all([
+                api.put(`/admin/lessons/${lesson.id}`, { display_order: newCurrentOrder }),
+                api.put(`/admin/lessons/${otherLesson.id}`, { display_order: newOtherOrder })
+            ])
+            await fetchLessons(selectedUnit)
+            showToast("Lesson order updated", "success")
+        } catch {
+            showToast("Failed to update lesson order", "error")
+        }
     }
 
     // Sign out handler
@@ -954,335 +1035,747 @@ export default function AdminDashboard() {
                     )}
 
                     {/* ──────────────── CONTENT TAB ──────────────── */}
-                    {activeTab === 'content' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                            {/* Columns Layout: Column 1 (Grades) */}
-                            <div className="lg:col-span-3 space-y-4">
-                                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                    <h3 className="font-extrabold text-white tracking-wide text-sm uppercase">1. Grades</h3>
-                                    <button
-                                        onClick={() => setShowAddGrade(!showAddGrade)}
-                                        className="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1"
-                                    >
-                                        {showAddGrade ? 'Cancel' : '+ Add'}
-                                    </button>
-                                </div>
+                    {activeTab === 'content' && (() => {
+                        const selectedGradeObj = grades.find(g => g.id === selectedGrade)
+                        const selectedUnitObj = units.find(u => u.id === selectedUnit)
+                        const filteredLessons = lessons.filter(l => 
+                            l.title.toLowerCase().includes(lessonSearchQuery.toLowerCase()) || 
+                            (l.description && l.description.toLowerCase().includes(lessonSearchQuery.toLowerCase()))
+                        )
+                        const sortedLessons = [...filteredLessons].sort((a, b) => a.display_order - b.display_order)
 
-                                {showAddGrade && (
-                                    <form onSubmit={handleCreateGrade} className="bg-white/[0.02] border border-white/5 p-3.5 rounded-xl space-y-3 shadow-inner">
-                                        <h4 className="text-xs font-bold text-white">Create New Grade</h4>
-                                        <div>
-                                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Grade Name</label>
-                                            <input
-                                                type="text"
-                                                placeholder="e.g. Grade 12"
-                                                value={newGradeName}
-                                                onChange={e => setNewGradeName(e.target.value)}
-                                                className="w-full bg-slate-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                required
-                                            />
+                        return (
+                            <div className="space-y-6">
+                                {/* Curriculum Navigation & Breadcrumb Banner */}
+                                <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-4 sm:p-5 backdrop-blur-xl shadow-sm dark:shadow-none flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                    <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm">
+                                        <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse" />
+                                            <span>Curriculum Studio</span>
                                         </div>
-                                        <div>
-                                            <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Display Order</label>
-                                            <input
-                                                type="number"
-                                                value={newGradeOrder}
-                                                onChange={e => setNewGradeOrder(parseInt(e.target.value) || 0)}
-                                                className="w-full bg-slate-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                            />
-                                        </div>
-                                        <button
-                                            type="submit"
-                                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-xs transition"
-                                        >
-                                            Create Grade
-                                        </button>
-                                    </form>
-                                )}
 
-                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                                    {grades.length === 0 ? (
-                                        <p className="text-slate-500 text-xs py-4 text-center">No grades created.</p>
-                                    ) : (
-                                        grades.map(g => (
-                                            <div
-                                                key={g.id}
-                                                onClick={() => setSelectedGrade(g.id)}
-                                                className={`w-full flex items-center justify-between p-3.5 rounded-xl cursor-pointer transition-all border text-left group ${
-                                                    selectedGrade === g.id
-                                                        ? 'bg-gradient-to-r from-indigo-500/10 to-indigo-500/5 border-indigo-500/30 text-white shadow-md'
-                                                        : 'bg-white/[0.01] border-white/[0.03] text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
-                                                }`}
+                                        <svg className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                        </svg>
+
+                                        {/* Grade Badge */}
+                                        {selectedGradeObj ? (
+                                            <button 
+                                                onClick={() => setSelectedUnit(null)}
+                                                className="inline-flex items-center gap-1.5 font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 px-2.5 py-1 rounded-lg hover:brightness-110 transition cursor-pointer"
+                                                title="Current Grade (click to view units)"
                                             >
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    <span className={`w-2 h-2 rounded-full ${selectedGrade === g.id ? 'bg-indigo-400 animate-pulse' : 'bg-slate-700'}`} />
-                                                    <span className="font-bold text-sm truncate">{g.name}</span>
-                                                </div>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        handleDeleteGrade(g.id, g.name)
-                                                    }}
-                                                    className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity p-1"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Columns Layout: Column 2 (Units) */}
-                            <div className="lg:col-span-3 space-y-4">
-                                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                    <h3 className="font-extrabold text-white tracking-wide text-sm uppercase">2. Units</h3>
-                                    {selectedGrade !== null && (
-                                        <button
-                                            onClick={() => setShowAddUnit(!showAddUnit)}
-                                            className="text-xs text-indigo-400 hover:text-indigo-300 font-bold flex items-center gap-1"
-                                        >
-                                            {showAddUnit ? 'Cancel' : '+ Add'}
-                                        </button>
-                                    )}
-                                </div>
-
-                                {selectedGrade === null ? (
-                                    <div className="bg-slate-900/20 border border-dashed border-white/5 rounded-2xl py-8 text-center text-slate-600 text-xs">
-                                        Select a grade to see units
-                                    </div>
-                                ) : (
-                                    <>
-                                        {showAddUnit && (
-                                            <form onSubmit={handleCreateUnit} className="bg-white/[0.02] border border-white/5 p-3.5 rounded-xl space-y-3 shadow-inner">
-                                                <h4 className="text-xs font-bold text-white">Create New Unit</h4>
-                                                <div>
-                                                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Unit Name</label>
-                                                    <input
-                                                        type="text"
-                                                        placeholder="e.g. Unit 1: Programming"
-                                                        value={newUnitName}
-                                                        onChange={e => setNewUnitName(e.target.value)}
-                                                        className="w-full bg-slate-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                        required
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block mb-1">Display Order</label>
-                                                    <input
-                                                        type="number"
-                                                        value={newUnitOrder}
-                                                        onChange={e => setNewUnitOrder(parseInt(e.target.value) || 0)}
-                                                        className="w-full bg-slate-950 border border-white/5 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                    />
-                                                </div>
-                                                <button
-                                                    type="submit"
-                                                    className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 rounded-lg text-xs transition"
-                                                >
-                                                    Create Unit
-                                                </button>
-                                            </form>
+                                                <span>📚 {selectedGradeObj.name}</span>
+                                            </button>
+                                        ) : (
+                                            <span className="text-slate-500 dark:text-slate-500 italic">Select a Grade</span>
                                         )}
 
-                                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
-                                            {units.length === 0 ? (
-                                                <p className="text-slate-600 text-xs py-6 text-center">No units inside this grade.</p>
-                                            ) : (
-                                                units.map(u => (
-                                                    <div
-                                                        key={u.id}
-                                                        onClick={() => setSelectedUnit(u.id)}
-                                                        className={`w-full flex items-center justify-between p-3.5 rounded-xl cursor-pointer transition-all border text-left group ${
-                                                            selectedUnit === u.id
-                                                                ? 'bg-gradient-to-r from-indigo-500/10 to-indigo-500/5 border-indigo-500/30 text-white shadow-md'
-                                                                : 'bg-white/[0.01] border-white/[0.03] text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
-                                                        }`}
-                                                    >
-                                                        <div className="flex items-center gap-2.5 min-w-0">
-                                                            <span className={`w-2 h-2 rounded-full ${selectedUnit === u.id ? 'bg-indigo-400 animate-pulse' : 'bg-slate-700'}`} />
-                                                            <span className="font-bold text-sm truncate">{u.name}</span>
-                                                        </div>
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                handleDeleteUnit(u.id, u.name)
-                                                            }}
-                                                            className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-red-400 transition-opacity p-1"
-                                                        >
-                                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                                            </svg>
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            )}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                                        {selectedGradeObj && (
+                                            <>
+                                                <svg className="w-4 h-4 text-slate-400 dark:text-slate-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
 
-                            {/* Columns Layout: Column 3 (Lessons) */}
-                            <div className="lg:col-span-6 space-y-4">
-                                <div className="flex items-center justify-between border-b border-white/5 pb-3">
-                                    <h3 className="font-extrabold text-white tracking-wide text-sm uppercase">3. Lessons</h3>
-                                    {selectedUnit !== null && (
+                                                {/* Unit Badge */}
+                                                {selectedUnitObj ? (
+                                                    <span className="inline-flex items-center gap-1.5 font-semibold text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20 px-2.5 py-1 rounded-lg">
+                                                        <span>📁 {selectedUnitObj.name}</span>
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-500 dark:text-slate-500 italic">Select a Unit</span>
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Quick Creation Actions */}
+                                    <div className="flex items-center gap-2 shrink-0">
                                         <button
-                                            onClick={openCreateLessonModal}
-                                            className="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/10"
+                                            onClick={openCreateGradeModal}
+                                            className="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/5 transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                                         >
-                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7-7H5" />
                                             </svg>
-                                            Add Lesson
+                                            <span>New Grade</span>
                                         </button>
-                                    )}
+
+                                        {selectedGrade !== null && (
+                                            <button
+                                                onClick={openCreateUnitModal}
+                                                className="px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.05] dark:hover:bg-white/[0.1] border border-slate-200 dark:border-white/5 transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                            >
+                                                <svg className="w-3.5 h-3.5 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7-7H5" />
+                                                </svg>
+                                                <span>New Unit</span>
+                                            </button>
+                                        )}
+
+                                        {selectedUnit !== null && (
+                                            <button
+                                                onClick={openCreateLessonModal}
+                                                className="px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:brightness-110 shadow-md shadow-indigo-600/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                            >
+                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7-7H5" />
+                                                </svg>
+                                                <span>Add Lesson</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
-                                {selectedUnit === null ? (
-                                    <div className="bg-slate-900/20 border border-dashed border-white/5 rounded-2xl py-12 text-center text-slate-600 text-xs">
-                                        Select a unit to see lessons list
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {lessons.length === 0 ? (
-                                            <div className="bg-white/[0.01] border border-white/[0.04] rounded-2xl py-16 text-center">
-                                                <div className="text-3xl mb-3 opacity-30">📹</div>
-                                                <p className="text-slate-500 text-xs font-semibold">No lessons inside this unit yet.</p>
+                                {/* Main Studio 2-Column Split */}
+                                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                    {/* Left Column: Grade & Unit Navigation */}
+                                    <div className="lg:col-span-4 space-y-6">
+                                        {/* 1. Grades Card */}
+                                        <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-4 shadow-sm dark:shadow-none backdrop-blur-xl space-y-3">
+                                            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/70 dark:border-white/5">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wider">1. Grades</h3>
+                                                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                                                        {grades.length}
+                                                    </span>
+                                                </div>
                                                 <button
-                                                    onClick={openCreateLessonModal}
-                                                    className="mt-3 text-xs text-indigo-400 hover:text-indigo-300 font-bold"
+                                                    onClick={openCreateGradeModal}
+                                                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center gap-1 hover:underline cursor-pointer"
                                                 >
-                                                    Create your first lesson
+                                                    + Add Grade
                                                 </button>
                                             </div>
-                                        ) : (
-                                            lessons.map(lesson => (
-                                                <div key={lesson.id} className="bg-white/[0.02] border border-white/[0.04] rounded-2xl p-4 flex gap-4 hover:border-white/10 transition group shadow-md relative">
-                                                    {/* Display Order Badge */}
-                                                    <span className="absolute top-3 right-3 text-[10px] text-slate-600 font-mono font-bold bg-slate-950 px-2 py-0.5 rounded-full">Order: {lesson.display_order}</span>
 
-                                                    <div className="w-16 h-16 rounded-xl bg-slate-900/80 border border-white/5 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
-                                                        {getLessonThumbnail(lesson.thumbnail_url, lesson.drive_url) && !brokenThumbnails[lesson.id] ? (
-                                                            <img 
-                                                                src={getLessonThumbnail(lesson.thumbnail_url, lesson.drive_url)!} 
-                                                                alt={lesson.title} 
-                                                                referrerPolicy="no-referrer"
-                                                                onError={(e) => {
-                                                                    const fileId = extractDriveFileId(lesson.thumbnail_url || lesson.drive_url)
-                                                                    const target = e.currentTarget
-                                                                    if (fileId && !target.dataset.triedLh3) {
-                                                                        target.dataset.triedLh3 = 'true'
-                                                                        target.src = `https://lh3.googleusercontent.com/d/${fileId}`
-                                                                        return
-                                                                    }
-                                                                    setBrokenThumbnails(prev => ({ ...prev, [lesson.id]: true }))
-                                                                }}
-                                                                className="w-full h-full object-cover" 
-                                                            />
-                                                        ) : (
-                                                            <svg className="w-8 h-8 text-indigo-500/50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
-                                                            </svg>
-                                                        )}
+                                            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                                                {grades.length === 0 ? (
+                                                    <div className="py-8 text-center text-slate-400 dark:text-slate-500 text-xs">
+                                                        No grades created yet.
                                                     </div>
-
-                                                    <div className="flex-1 min-w-0">
-                                                        <h4 className="font-bold text-white text-sm truncate pr-16">{lesson.title}</h4>
-                                                        <p className="text-xs text-slate-400 line-clamp-2 mt-1 pr-6">{lesson.description || 'No description provided.'}</p>
-                                                        <div className="flex items-center gap-4 mt-2.5">
-                                                            <a
-                                                                href={lesson.drive_url}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold inline-flex items-center gap-1"
-                                                            >
-                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                                                                </svg>
-                                                                Drive Link
-                                                            </a>
+                                                ) : (
+                                                    grades.map(g => (
+                                                        <div
+                                                            key={g.id}
+                                                            onClick={() => {
+                                                                setSelectedGrade(g.id)
+                                                                setSelectedUnit(null)
+                                                            }}
+                                                            className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border text-left group ${
+                                                                selectedGrade === g.id
+                                                                    ? 'bg-gradient-to-r from-indigo-500/15 to-violet-500/10 border-indigo-500/40 text-slate-900 dark:text-white shadow-sm ring-1 ring-indigo-500/30'
+                                                                    : 'bg-slate-50/60 dark:bg-white/[0.01] border-slate-200/80 dark:border-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.03] hover:border-slate-300 dark:hover:border-white/10'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                                                    selectedGrade === g.id ? 'bg-indigo-500 animate-pulse ring-2 ring-indigo-500/30' : 'bg-slate-300 dark:bg-slate-700'
+                                                                }`} />
+                                                                <span className="font-bold text-xs sm:text-sm truncate">{g.name}</span>
+                                                            </div>
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-white/5">
+                                                                    #{g.display_order}
+                                                                </span>
+                                                                {/* Edit Grade Button */}
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        openEditGradeModal(g)
+                                                                    }}
+                                                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/10 transition p-1 rounded-md cursor-pointer"
+                                                                    title="Edit Grade"
+                                                                >
+                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                                    </svg>
+                                                                </button>
+                                                                {/* Delete Grade Button */}
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        handleDeleteGrade(g.id, g.name)
+                                                                    }}
+                                                                    className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition p-1 rounded-md"
+                                                                    title="Delete Grade"
+                                                                >
+                                                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                                    </svg>
+                                                                </button>
+                                                            </div>
                                                         </div>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* 2. Units Card */}
+                                        <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-4 shadow-sm dark:shadow-none backdrop-blur-xl space-y-3">
+                                            <div className="flex items-center justify-between pb-2.5 border-b border-slate-200/70 dark:border-white/5">
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="font-extrabold text-slate-900 dark:text-white text-xs uppercase tracking-wider">
+                                                        2. Units {selectedGradeObj ? `(${selectedGradeObj.name})` : ''}
+                                                    </h3>
+                                                    {selectedGrade !== null && (
+                                                        <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full">
+                                                            {units.length}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {selectedGrade !== null && (
+                                                    <button
+                                                        onClick={openCreateUnitModal}
+                                                        className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 font-bold flex items-center gap-1 hover:underline cursor-pointer"
+                                                    >
+                                                        + Add Unit
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {selectedGrade === null ? (
+                                                <div className="bg-slate-50/60 dark:bg-white/[0.01] border border-dashed border-slate-300 dark:border-white/10 rounded-xl py-8 px-4 text-center">
+                                                    <span className="text-2xl block mb-2 opacity-50">👈</span>
+                                                    <p className="text-slate-600 dark:text-slate-400 text-xs font-semibold">Select a grade above</p>
+                                                    <p className="text-slate-400 dark:text-slate-600 text-[11px] mt-0.5">Click any grade to view and manage its units.</p>
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                                                    {units.length === 0 ? (
+                                                        <div className="py-8 text-center px-4">
+                                                            <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">No units in {selectedGradeObj?.name}.</p>
+                                                            <button
+                                                                onClick={openCreateUnitModal}
+                                                                className="mt-2 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline"
+                                                            >
+                                                                Create the first unit
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        units.map(u => (
+                                                            <div
+                                                                key={u.id}
+                                                                onClick={() => setSelectedUnit(u.id)}
+                                                                className={`w-full flex items-center justify-between p-3 rounded-xl cursor-pointer transition-all border text-left group ${
+                                                                    selectedUnit === u.id
+                                                                        ? 'bg-gradient-to-r from-violet-500/15 to-indigo-500/10 border-violet-500/40 text-slate-900 dark:text-white shadow-sm ring-1 ring-violet-500/30'
+                                                                        : 'bg-slate-50/60 dark:bg-white/[0.01] border-slate-200/80 dark:border-white/[0.04] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/[0.03] hover:border-slate-300 dark:hover:border-white/10'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                                    <span className={`w-2 h-2 rounded-full shrink-0 ${
+                                                                        selectedUnit === u.id ? 'bg-violet-500 animate-pulse ring-2 ring-violet-500/30' : 'bg-slate-300 dark:bg-slate-700'
+                                                                    }`} />
+                                                                    <span className="font-bold text-xs sm:text-sm truncate">{u.name}</span>
+                                                                </div>
+                                                                <div className="flex items-center gap-1 shrink-0">
+                                                                    <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 px-1.5 py-0.5 rounded bg-slate-200/50 dark:bg-white/5">
+                                                                        #{u.display_order}
+                                                                    </span>
+                                                                    {/* Edit Unit Button */}
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            openEditUnitModal(u)
+                                                                        }}
+                                                                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-slate-100 dark:hover:bg-white/10 transition p-1 rounded-md cursor-pointer"
+                                                                        title="Edit Unit"
+                                                                    >
+                                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                                        </svg>
+                                                                    </button>
+                                                                    {/* Delete Unit Button */}
+                                                                    <button
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation()
+                                                                            handleDeleteUnit(u.id, u.name)
+                                                                        }}
+                                                                        className="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition p-1 rounded-md"
+                                                                        title="Delete Unit"
+                                                                    >
+                                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Right Column: Lessons Studio Stage */}
+                                    <div className="lg:col-span-8 min-w-0 space-y-4">
+                                        {selectedUnit === null ? (
+                                            /* No Unit Selected Empty Studio */
+                                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-3xl p-10 sm:p-14 text-center shadow-sm dark:shadow-none backdrop-blur-xl">
+                                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 flex items-center justify-center mx-auto mb-4 text-indigo-600 dark:text-indigo-400 shadow-lg shadow-indigo-500/10">
+                                                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+                                                    </svg>
+                                                </div>
+                                                <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white">Curriculum Lesson Studio</h3>
+                                                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 leading-relaxed">
+                                                    {selectedGrade === null 
+                                                        ? 'Select a Grade on the left to start browsing and managing lessons.'
+                                                        : `Grade "${selectedGradeObj?.name}" selected. Now choose or create a Unit to view and edit its video lessons.`
+                                                    }
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            /* Active Unit Lesson Studio */
+                                            <div className="space-y-4">
+                                                {/* Studio Header Bar */}
+                                                <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-4 sm:p-5 shadow-sm dark:shadow-none backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white truncate">
+                                                                {selectedUnitObj?.name}
+                                                            </h3>
+                                                            <span className="text-[10px] font-bold bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full shrink-0">
+                                                                {lessons.length} {lessons.length === 1 ? 'Lesson' : 'Lessons'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                                            Curriculum path: <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedGradeObj?.name}</span> &gt; {selectedUnitObj?.name}
+                                                        </p>
                                                     </div>
 
-                                                    <div className="flex flex-col gap-2 shrink-0 self-center">
+                                                    <div className="flex items-center gap-2.5">
+                                                        {/* Search within lessons */}
+                                                        {lessons.length > 2 && (
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="text"
+                                                                    placeholder="Search lessons..."
+                                                                    value={lessonSearchQuery}
+                                                                    onChange={e => setLessonSearchQuery(e.target.value)}
+                                                                    className="w-36 sm:w-48 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                                                />
+                                                                <svg className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                                                </svg>
+                                                                {lessonSearchQuery && (
+                                                                    <button 
+                                                                        onClick={() => setLessonSearchQuery('')}
+                                                                        className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 text-xs"
+                                                                    >
+                                                                        ✕
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        )}
+
                                                         <button
-                                                            onClick={() => openEditLessonModal(lesson)}
-                                                            className="text-xs font-bold text-slate-400 hover:text-white px-2.5 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] transition"
+                                                            onClick={openCreateLessonModal}
+                                                            className="bg-gradient-to-r from-indigo-600 to-violet-600 hover:brightness-110 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-600/20 cursor-pointer active:scale-95 shrink-0"
                                                         >
-                                                            Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDeleteLesson(lesson.id, lesson.title)}
-                                                            className="text-xs font-bold text-slate-500 hover:text-red-400 px-2.5 py-1.5 hover:bg-red-500/5 transition rounded-lg"
-                                                        >
-                                                            Delete
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7-7H5" />
+                                                            </svg>
+                                                            <span>Add Lesson</span>
                                                         </button>
                                                     </div>
                                                 </div>
-                                            ))
+
+                                                {/* Lessons Cards List */}
+                                                <div className="space-y-3">
+                                                    {sortedLessons.length === 0 ? (
+                                                        <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-2xl py-14 text-center px-4 shadow-sm dark:shadow-none">
+                                                            <div className="text-3xl mb-3 opacity-40">🎬</div>
+                                                            {lessonSearchQuery ? (
+                                                                <>
+                                                                    <p className="text-slate-700 dark:text-slate-300 text-xs font-bold">No lessons matched &quot;{lessonSearchQuery}&quot;</p>
+                                                                    <button 
+                                                                        onClick={() => setLessonSearchQuery('')}
+                                                                        className="mt-2 text-xs text-indigo-600 dark:text-indigo-400 font-bold hover:underline"
+                                                                    >
+                                                                        Clear search query
+                                                                    </button>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <p className="text-slate-700 dark:text-slate-300 text-xs font-bold">No lessons in this unit yet.</p>
+                                                                    <p className="text-slate-400 dark:text-slate-500 text-[11px] mt-0.5">Attach your first Google Drive video lesson to this unit.</p>
+                                                                    <button
+                                                                        onClick={openCreateLessonModal}
+                                                                        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-md shadow-indigo-600/20 cursor-pointer"
+                                                                    >
+                                                                        + Create First Lesson
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        sortedLessons.map((lesson, idx) => (
+                                                            <div 
+                                                                key={lesson.id} 
+                                                                className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] hover:border-indigo-500/30 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:gap-5 items-start sm:items-center shadow-xs hover:shadow-md transition-all duration-200 group"
+                                                            >
+                                                                {/* Video Thumbnail Box */}
+                                                                <div className="w-full sm:w-28 h-32 sm:h-20 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden shadow-inner relative group-hover:ring-1 group-hover:ring-indigo-500/30 transition">
+                                                                    {getLessonThumbnail(lesson.thumbnail_url, lesson.drive_url) && !brokenThumbnails[lesson.id] ? (
+                                                                        <img 
+                                                                            src={getLessonThumbnail(lesson.thumbnail_url, lesson.drive_url)!} 
+                                                                            alt={lesson.title} 
+                                                                            referrerPolicy="no-referrer"
+                                                                            onError={(e) => {
+                                                                                const fileId = extractDriveFileId(lesson.thumbnail_url || lesson.drive_url)
+                                                                                const target = e.currentTarget
+                                                                                if (fileId && !target.dataset.triedLh3) {
+                                                                                    target.dataset.triedLh3 = 'true'
+                                                                                    target.src = `https://lh3.googleusercontent.com/d/${fileId}`
+                                                                                    return
+                                                                                }
+                                                                                setBrokenThumbnails(prev => ({ ...prev, [lesson.id]: true }))
+                                                                            }}
+                                                                            className="w-full h-full object-cover" 
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
+                                                                            <svg className="w-7 h-7 text-indigo-500/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.91 11.672a.375.375 0 010 .656l-5.603 3.113a.375.375 0 01-.557-.328V8.887c0-.286.307-.466.557-.327l5.603 3.112z" />
+                                                                            </svg>
+                                                                            <span className="text-[9px] mt-1 font-mono uppercase">Video</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+
+                                                                {/* Content Details */}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <div className="flex flex-wrap items-center gap-2 mb-1">
+                                                                        <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300">
+                                                                            Lesson #{lesson.display_order}
+                                                                        </span>
+
+                                                                        <a
+                                                                            href={lesson.drive_url}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 px-2 py-0.5 rounded-md border border-indigo-200 dark:border-indigo-500/20 hover:brightness-105 transition"
+                                                                            title="Open Google Drive video in new tab"
+                                                                        >
+                                                                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                                                                            </svg>
+                                                                            <span>Drive Video</span>
+                                                                        </a>
+                                                                    </div>
+
+                                                                    <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base leading-snug">
+                                                                        {lesson.title}
+                                                                    </h4>
+
+                                                                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1 leading-relaxed">
+                                                                        {lesson.description || 'No description provided for this lesson.'}
+                                                                    </p>
+                                                                </div>
+
+                                                                {/* Action Controls & Reordering */}
+                                                                <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center border-t sm:border-t-0 pt-3 sm:pt-0 w-full sm:w-auto justify-end border-slate-100 dark:border-white/5">
+                                                                    {/* Move Up */}
+                                                                    <button
+                                                                        onClick={() => handleReorderLesson(lesson, 'up')}
+                                                                        disabled={idx === 0}
+                                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
+                                                                        title="Move lesson up"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+                                                                        </svg>
+                                                                    </button>
+
+                                                                    {/* Move Down */}
+                                                                    <button
+                                                                        onClick={() => handleReorderLesson(lesson, 'down')}
+                                                                        disabled={idx === sortedLessons.length - 1}
+                                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 disabled:pointer-events-none transition cursor-pointer"
+                                                                        title="Move lesson down"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                                                                        </svg>
+                                                                    </button>
+
+                                                                    {/* Edit Button */}
+                                                                    <button
+                                                                        onClick={() => openEditLessonModal(lesson)}
+                                                                        className="text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/[0.04] hover:bg-slate-200 dark:hover:bg-white/[0.08] transition flex items-center gap-1 cursor-pointer"
+                                                                    >
+                                                                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                                        </svg>
+                                                                        <span>Edit</span>
+                                                                    </button>
+
+                                                                    {/* Delete Button */}
+                                                                    <button
+                                                                        onClick={() => handleDeleteLesson(lesson.id, lesson.title)}
+                                                                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition rounded-lg cursor-pointer"
+                                                                        title="Delete Lesson"
+                                                                    >
+                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                                                        </svg>
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
-                                )}
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )
+                    })()}
                 </main>
             </div>
 
-            {/* ── LESSON MODAL OVERLAY ── */}
-            {showLessonModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 sm:p-4 animate-fade-in overflow-y-auto">
-                    <div className="bg-slate-900 border border-white/10 rounded-2xl sm:rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col my-auto">
-                        <div className="px-5 sm:px-6 py-4 border-b border-white/5 flex items-center justify-between shrink-0">
-                            <h3 className="font-extrabold text-white text-sm sm:text-base tracking-wide">
-                                {lessonModalMode === 'create' ? 'Create New Lesson' : 'Edit Lesson'}
-                            </h3>
+            {/* ── ADD GRADE MODAL ── */}
+            {showAddGrade && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden relative">
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
+                                    📚
+                                </div>
+                                <h3 className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
+                                    {editingGrade ? 'Edit Grade' : 'Create New Grade'}
+                                </h3>
+                            </div>
                             <button
-                                onClick={() => setShowLessonModal(false)}
-                                className="text-slate-400 hover:text-white transition p-1"
+                                onClick={() => {
+                                    setShowAddGrade(false)
+                                    setEditingGrade(null)
+                                }}
+                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition p-1 cursor-pointer"
                             >
-                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L12 12M12 12l6 6M12 12l6-6M12 12l-6-6" />
-                                </svg>
+                                ✕
                             </button>
                         </div>
 
-                        <form onSubmit={handleSaveLesson} className="p-4 sm:p-6 space-y-4 overflow-y-auto">
+                        <form onSubmit={handleSaveGrade} className="p-6 space-y-4">
                             <div>
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Lesson Title *</label>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Grade Name *
+                                </label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. Introduction to Variables"
+                                    placeholder="e.g. Grade 12 (Advanced ICT)"
+                                    value={newGradeName}
+                                    onChange={e => setNewGradeName(e.target.value)}
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Display Order
+                                </label>
+                                <input
+                                    type="number"
+                                    value={newGradeOrder}
+                                    onChange={e => setNewGradeOrder(parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1">Controls sorting in student curriculum views.</p>
+                            </div>
+
+                            <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-200 dark:border-white/5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddGrade(false)
+                                        setEditingGrade(null)
+                                    }}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition cursor-pointer"
+                                >
+                                    {editingGrade ? 'Save Changes' : 'Create Grade'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── ADD / EDIT UNIT MODAL ── */}
+            {showAddUnit && selectedGrade !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden relative">
+                        <div className="px-6 py-4 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold">
+                                    📁
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
+                                        {editingUnit ? 'Edit Unit' : 'Create New Unit'}
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500">
+                                        Target: {grades.find(g => g.id === selectedGrade)?.name}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowAddUnit(false)
+                                    setEditingUnit(null)
+                                }}
+                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition p-1 cursor-pointer"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveUnit} className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Unit Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Unit 1: Programming Concepts"
+                                    value={newUnitName}
+                                    onChange={e => setNewUnitName(e.target.value)}
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Display Order
+                                </label>
+                                <input
+                                    type="number"
+                                    value={newUnitOrder}
+                                    onChange={e => setNewUnitOrder(parseInt(e.target.value) || 0)}
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1">Controls order inside the parent grade.</p>
+                            </div>
+
+                            <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-200 dark:border-white/5">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowAddUnit(false)
+                                        setEditingUnit(null)
+                                    }}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shadow-md shadow-violet-600/20 transition cursor-pointer"
+                                >
+                                    {editingUnit ? 'Save Changes' : 'Create Unit'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── LESSON MODAL OVERLAY ── */}
+            {showLessonModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-md p-3 sm:p-4 animate-fade-in overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-white/10 rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden relative max-h-[92vh] flex flex-col my-auto">
+                        <div className="px-6 py-4.5 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between shrink-0 bg-slate-50/50 dark:bg-white/[0.01]">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-indigo-500 to-violet-600 text-white flex items-center justify-center text-sm shadow-md shadow-indigo-500/20">
+                                    📹
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-900 dark:text-white text-sm sm:text-base">
+                                        {lessonModalMode === 'create' ? 'Create New Lesson' : 'Edit Lesson'}
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500">
+                                        Unit: {units.find(u => u.id === selectedUnit)?.name || 'Current Unit'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setShowLessonModal(false)}
+                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSaveLesson} className="p-5 sm:p-6 space-y-4 overflow-y-auto">
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Lesson Title *
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Introduction to Python Functions"
                                     value={lessonForm.title}
                                     onChange={e => setLessonForm({ ...lessonForm, title: e.target.value })}
-                                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                                     required
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Description</label>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Description
+                                </label>
                                 <textarea
-                                    placeholder="Brief lesson description..."
+                                    placeholder="Summary of topics covered, prerequisites, or notes..."
                                     value={lessonForm.description}
                                     onChange={e => setLessonForm({ ...lessonForm, description: e.target.value })}
-                                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 h-20 resize-none"
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 h-20 resize-none"
                                 />
+                            </div>
+
+                            <div>
+                                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                    Google Drive Video Link *
+                                </label>
+                                <input
+                                    type="url"
+                                    placeholder="https://drive.google.com/file/d/..."
+                                    value={lessonForm.drive_url}
+                                    onChange={e => {
+                                        setPreviewBroken(false)
+                                        setLessonForm({ ...lessonForm, drive_url: e.target.value })
+                                    }}
+                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                                    required
+                                />
+                                <p className="text-[11px] text-slate-400 mt-1">Paste any Google Drive share link to the video file.</p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
-                                    <div className="flex justify-between items-center mb-1">
-                                        <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Thumbnail URL</label>
+                                    <div className="flex justify-between items-center mb-1.5">
+                                        <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+                                            Thumbnail URL
+                                        </label>
                                         {lessonForm.drive_url && !lessonForm.thumbnail_url && (
                                             <button
                                                 type="button"
                                                 onClick={() => setLessonForm({ ...lessonForm, thumbnail_url: lessonForm.drive_url })}
-                                                className="text-[10px] text-indigo-400 hover:text-indigo-300 font-semibold"
+                                                className="text-[10px] text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer"
                                             >
                                                 Use Drive Link
                                             </button>
@@ -1296,40 +1789,26 @@ export default function AdminDashboard() {
                                             setPreviewBroken(false)
                                             setLessonForm({ ...lessonForm, thumbnail_url: e.target.value })
                                         }}
-                                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                                     />
-                                    <p className="text-[10px] text-slate-500 mt-1">Paste any Google Drive share link or direct image URL</p>
                                 </div>
                                 <div>
-                                    <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Display Order</label>
+                                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider block mb-1.5">
+                                        Display Order
+                                    </label>
                                     <input
                                         type="number"
                                         value={lessonForm.display_order}
                                         onChange={e => setLessonForm({ ...lessonForm, display_order: parseInt(e.target.value) || 0 })}
-                                        className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                        className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Google Drive Link *</label>
-                                <input
-                                    type="url"
-                                    placeholder="https://drive.google.com/file/d/..."
-                                    value={lessonForm.drive_url}
-                                    onChange={e => {
-                                        setPreviewBroken(false)
-                                        setLessonForm({ ...lessonForm, drive_url: e.target.value })
-                                    }}
-                                    className="w-full bg-slate-950 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                    required
-                                />
-                            </div>
-
                             {/* Live Thumbnail Preview & Status */}
                             {(lessonForm.thumbnail_url || lessonForm.drive_url) && (
-                                <div className="bg-slate-950/80 border border-white/10 rounded-2xl p-3.5 flex gap-3.5 items-center">
-                                    <div className="w-20 h-14 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner">
+                                <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-white/10 rounded-2xl p-3.5 flex gap-3.5 items-center">
+                                    <div className="w-20 h-14 rounded-xl bg-slate-200 dark:bg-slate-900 border border-slate-300 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden relative shadow-inner">
                                         {getLessonThumbnail(lessonForm.thumbnail_url, lessonForm.drive_url) && !previewBroken ? (
                                             <img 
                                                 src={getLessonThumbnail(lessonForm.thumbnail_url, lessonForm.drive_url)!} 
@@ -1349,25 +1828,25 @@ export default function AdminDashboard() {
                                                 className="w-full h-full object-cover" 
                                             />
                                         ) : (
-                                            <div className="text-[10px] text-slate-500 font-mono text-center px-1">
-                                                {previewBroken ? "Failed" : "Loading..."}
+                                            <div className="text-[10px] text-slate-400 font-mono text-center px-1">
+                                                {previewBroken ? "No Preview" : "Loading..."}
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5 text-xs font-semibold">
                                             {extractDriveFileId(lessonForm.thumbnail_url || lessonForm.drive_url) ? (
-                                                <span className="text-indigo-400 flex items-center gap-1">
-                                                    <span>📁 Google Drive Link Detected</span>
+                                                <span className="text-indigo-600 dark:text-indigo-400 flex items-center gap-1 font-bold">
+                                                    <span>📁 Google Drive File Detected</span>
                                                 </span>
                                             ) : (
-                                                <span className="text-slate-300">Custom Image Link</span>
+                                                <span className="text-slate-600 dark:text-slate-300">Custom Image Link</span>
                                             )}
                                         </div>
-                                        <p className="text-[11px] text-slate-400 mt-1">
+                                        <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                                             {!previewBroken 
-                                                ? "✅ Thumbnail preview ready" 
-                                                : "⚠️ Preview failed: ensure Google Drive access is set to 'Anyone with the link' (Viewer)"
+                                                ? "✅ Thumbnail preview ready for student dashboard" 
+                                                : "⚠️ Preview not available. Please verify the Google Drive file is shared to 'Anyone with the link' (Viewer)"
                                             }
                                         </p>
                                     </div>
@@ -1375,25 +1854,25 @@ export default function AdminDashboard() {
                             )}
 
                             {/* Google Drive Tip Box */}
-                            <div className="bg-indigo-500/5 border border-indigo-500/15 rounded-xl p-3 text-[11px] text-slate-400 flex items-start gap-2.5">
-                                <span className="text-sm">💡</span>
+                            <div className="bg-indigo-500/5 dark:bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-3 text-[11px] text-slate-600 dark:text-slate-400 flex items-start gap-2.5">
+                                <span className="text-base shrink-0">💡</span>
                                 <div>
-                                    <strong className="text-slate-200">Google Drive Sharing Tip:</strong> For video and thumbnail Drive links to appear for students, make sure the file's General Access is set to <span className="text-indigo-300 font-semibold">&quot;Anyone with the link&quot; (Viewer)</span> in Google Drive.
+                                    <strong className="text-slate-800 dark:text-slate-200">Google Drive Access Notice:</strong> Ensure the file&apos;s General Access in Google Drive is set to <span className="text-indigo-600 dark:text-indigo-400 font-bold">&quot;Anyone with the link&quot; (Viewer)</span> so verified students can stream the video.
                                 </div>
                             </div>
 
-                            <div className="flex gap-3 justify-end pt-4 border-t border-white/5">
+                            <div className="flex gap-2.5 justify-end pt-3 border-t border-slate-200/80 dark:border-white/5">
                                 <button
                                     type="button"
                                     onClick={() => setShowLessonModal(false)}
-                                    className="text-xs text-slate-400 hover:text-white px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06]"
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={savingLesson}
-                                    className="text-xs font-semibold bg-gradient-to-r from-indigo-600 to-violet-600 hover:brightness-110 text-white px-5 py-2.5 rounded-xl shadow-lg transition disabled:opacity-50"
+                                    className="px-5 py-2 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 to-violet-600 hover:brightness-110 text-white shadow-md shadow-indigo-600/20 transition disabled:opacity-50 cursor-pointer"
                                 >
                                     {savingLesson ? 'Saving...' : 'Save Lesson'}
                                 </button>
@@ -1405,20 +1884,20 @@ export default function AdminDashboard() {
 
             {/* ── CUSTOM CONFIRMATION DIALOG OVERLAY ── */}
             {confirmDialog.show && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md px-4">
-                    <div className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 relative">
-                        <h4 className="font-extrabold text-white text-md tracking-wide mb-2">{confirmDialog.title}</h4>
-                        <p className="text-slate-400 text-xs leading-relaxed mb-6">{confirmDialog.message}</p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-md px-4 animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl p-6 relative">
+                        <h4 className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight mb-2">{confirmDialog.title}</h4>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed mb-6">{confirmDialog.message}</p>
                         <div className="flex justify-end gap-3">
                             <button
                                 onClick={() => setConfirmDialog(prev => ({ ...prev, show: false }))}
-                                className="text-xs text-slate-400 hover:text-white px-4 py-2 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition"
+                                className="text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 px-4 py-2 rounded-xl transition"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={confirmDialog.onConfirm}
-                                className="text-xs font-semibold bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl shadow-lg shadow-red-500/10 transition"
+                                className="text-xs font-bold bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl shadow-lg shadow-red-600/20 transition cursor-pointer"
                             >
                                 {confirmDialog.confirmText || 'Confirm'}
                             </button>
