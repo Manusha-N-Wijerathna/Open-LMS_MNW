@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import api from '@/lib/api'
 import { formatDriveThumbnail, getLessonThumbnail, extractDriveFileId } from '@/lib/drive'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 interface Profile {
     id: string
@@ -463,13 +464,13 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100 flex relative overflow-hidden">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex relative overflow-hidden transition-colors duration-300">
             {/* Animated Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.015)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(99,102,241,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.015)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
 
             {/* Glowing orbs */}
-            <div className="absolute top-10 left-10 w-96 h-96 bg-indigo-600/5 rounded-full blur-3xl pointer-events-none animate-pulse" />
-            <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-violet-600/5 rounded-full blur-3xl pointer-events-none animate-pulse [animation-delay:2s]" />
+            <div className="absolute top-10 left-10 w-96 h-96 bg-indigo-600/5 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+            <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-violet-600/5 dark:bg-violet-600/10 rounded-full blur-3xl pointer-events-none animate-pulse [animation-delay:2s]" />
 
             {/* Mobile Backdrop Overlay */}
             {sidebarOpen && (
@@ -480,13 +481,13 @@ export default function AdminDashboard() {
             )}
 
             {/* Collapsible Sidebar */}
-            <aside className={`fixed md:relative inset-y-0 left-0 z-40 bg-slate-900/40 backdrop-blur-xl border-r border-white/5 transition-all duration-300 flex flex-col justify-between overflow-hidden shrink-0 ${
+            <aside className={`fixed md:relative inset-y-0 left-0 z-40 bg-white/95 dark:bg-slate-900/40 backdrop-blur-xl border-r border-slate-200/80 dark:border-white/5 transition-all duration-300 flex flex-col justify-between overflow-hidden shrink-0 ${
                 sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full md:w-0 md:translate-x-0 border-r-0'
             }`}>
                 <div className="w-72 flex flex-col justify-between h-full">
                     <div>
                         {/* Header/Logo */}
-                        <div className="h-20 border-b border-white/5 flex items-center justify-between px-6">
+                        <div className="h-20 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between px-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                                     <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -494,12 +495,12 @@ export default function AdminDashboard() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h2 className="font-extrabold text-white tracking-wide">ICT LMS</h2>
+                                    <h2 className="font-extrabold text-slate-900 dark:text-white tracking-wide">ICT LMS</h2>
                                     <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Admin Panel</p>
                                 </div>
                             </div>
                             {/* Close button */}
-                            <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+                            <button onClick={() => setSidebarOpen(false)} className="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
                                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
@@ -517,18 +518,18 @@ export default function AdminDashboard() {
                                 }}
                                 className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group ${
                                     activeTab === 'users'
-                                        ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/10 border-l-2 border-indigo-500 text-white shadow-lg shadow-indigo-500/5'
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
+                                        ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/10 border-l-2 border-indigo-500 text-indigo-600 dark:text-white shadow-lg shadow-indigo-500/5 font-bold'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]'
                                 }`}
                             >
                                 <div className="flex items-center gap-3">
-                                    <svg className="w-5 h-5 transition-colors group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                    <svg className="w-5 h-5 transition-colors group-hover:text-indigo-500 dark:group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A9.342 9.342 0 0022.5 22.5M12 14.25a3 3 0 11-6 0 3 3 0 016 0zm0 0a3 3 0 116 0 3 3 0 01-6 0zm-3 8.25a8.967 8.967 0 01-2.285-1.175M1.5 22.5a8.25 8.25 0 0114.507-5.494M9 11.25a3 3 0 11-6 0 3 3 0 016 0zm3-3.75a3 3 0 11-6 0 3 3 0 016 0z" />
                                     </svg>
                                     <span>Users Management</span>
                                 </div>
                                 {pendingUsers.length > 0 && (
-                                    <span className="text-[10px] font-extrabold bg-indigo-500 text-white px-2 py-0.5 rounded-full ring-2 ring-slate-900 group-hover:scale-105 transition-transform">
+                                    <span className="text-[10px] font-extrabold bg-indigo-500 text-white px-2 py-0.5 rounded-full ring-2 ring-slate-100 dark:ring-slate-900 group-hover:scale-105 transition-transform">
                                         {pendingUsers.length}
                                     </span>
                                 )}
@@ -541,11 +542,11 @@ export default function AdminDashboard() {
                                 }}
                                 className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group ${
                                     activeTab === 'content'
-                                        ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/10 border-l-2 border-indigo-500 text-white shadow-lg shadow-indigo-500/5'
-                                        : 'text-slate-400 hover:text-slate-200 hover:bg-white/[0.02]'
+                                        ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/10 border-l-2 border-indigo-500 text-indigo-600 dark:text-white shadow-lg shadow-indigo-500/5 font-bold'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]'
                                 }`}
                             >
-                                <svg className="w-5 h-5 transition-colors group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                <svg className="w-5 h-5 transition-colors group-hover:text-indigo-500 dark:group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
                                 </svg>
                                 <span>Content Library</span>
@@ -554,19 +555,19 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Sidebar Footer */}
-                    <div className="p-4 border-t border-white/5 bg-slate-950/20">
+                    <div className="p-4 border-t border-slate-200/80 dark:border-white/5 bg-slate-50/80 dark:bg-slate-950/20">
                         <div className="flex items-center gap-3 px-2 py-3">
-                            <div className="w-10 h-10 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center font-bold text-indigo-400 text-sm">
+                            <div className="w-10 h-10 rounded-xl bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-white/10 flex items-center justify-center font-bold text-indigo-600 dark:text-indigo-400 text-sm">
                                 {adminUser?.full_name?.charAt(0).toUpperCase() || 'A'}
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-white truncate">{adminUser?.full_name || 'Admin User'}</p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{adminUser?.full_name || 'Admin User'}</p>
                                 <p className="text-[10px] text-slate-500 truncate font-mono">System Administrator</p>
                             </div>
                         </div>
                         <button
                             onClick={handleSignOut}
-                            className="w-full mt-2 flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 text-slate-400 border border-white/5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200"
+                            className="w-full mt-2 flex items-center justify-center gap-2 bg-slate-100 dark:bg-white/[0.03] hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 hover:border-red-500/20 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200"
                         >
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
@@ -580,11 +581,11 @@ export default function AdminDashboard() {
             {/* Main Area */}
             <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-y-auto">
                 {/* Header */}
-                <header className="h-16 sm:h-20 border-b border-white/5 flex items-center justify-between px-4 sm:px-6 md:px-10 shrink-0 bg-slate-950/40 backdrop-blur-md sticky top-0 z-20">
+                <header className="h-16 sm:h-20 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between px-4 sm:px-6 md:px-10 shrink-0 bg-white/80 dark:bg-slate-950/40 backdrop-blur-md sticky top-0 z-20">
                     <div className="flex items-center gap-3 sm:gap-4">
                         <button 
                             onClick={() => setSidebarOpen(!sidebarOpen)} 
-                            className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors flex items-center justify-center"
+                            className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 transition-colors flex items-center justify-center"
                             title={sidebarOpen ? "Hide sidebar" : "Show sidebar"}
                             aria-label="Toggle sidebar"
                         >
@@ -592,15 +593,18 @@ export default function AdminDashboard() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                             </svg>
                         </button>
-                        <h1 className="text-base sm:text-xl font-bold tracking-tight text-white capitalize truncate">
+                        <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white capitalize truncate">
                             {activeTab === 'users' ? 'Users Management' : 'Content Library'}
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 sm:gap-4">
+                        {/* Admin Theme Toggle */}
+                        <ThemeToggle />
+
                         {/* Quick Server Status */}
-                        <div className="hidden sm:flex items-center gap-2 bg-emerald-500/5 border border-emerald-500/10 rounded-full px-3 py-1 text-[11px] text-emerald-400 font-medium font-mono">
-                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-ping" />
+                        <div className="hidden sm:flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium font-mono">
+                            <span className="w-1.5 h-1.5 bg-emerald-500 dark:bg-emerald-400 rounded-full animate-ping" />
                             <span>System API Active</span>
                         </div>
                     </div>
@@ -610,24 +614,24 @@ export default function AdminDashboard() {
                     {/* Top Stats Bar */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {/* Card 1: Total Students */}
-                        <div className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-indigo-500/20 transition-all duration-300">
+                        <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-indigo-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-indigo-500/2 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
-                            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400 shadow-inner">
+                            <div className="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
                             </div>
                             <div>
                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Students</p>
-                                <h3 className="text-2xl font-black mt-0.5 text-white tracking-tight">{stats.totalStudents}</h3>
+                                <h3 className="text-2xl font-black mt-0.5 text-slate-900 dark:text-white tracking-tight">{stats.totalStudents}</h3>
                             </div>
                         </div>
 
                         {/* Card 2: Pending Approvals */}
-                        <div className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-yellow-500/20 transition-all duration-300">
+                        <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-yellow-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-yellow-500/2 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
                             <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
-                                stats.pendingApprovals > 0 ? 'bg-yellow-500/10 text-yellow-400 animate-pulse' : 'bg-slate-800/50 text-slate-500'
+                                stats.pendingApprovals > 0 ? 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 animate-pulse' : 'bg-slate-100 dark:bg-slate-800/50 text-slate-400 dark:text-slate-500'
                             }`}>
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -636,36 +640,36 @@ export default function AdminDashboard() {
                             <div>
                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Approvals</p>
                                 <h3 className={`text-2xl font-black mt-0.5 tracking-tight ${
-                                    stats.pendingApprovals > 0 ? 'text-yellow-400' : 'text-white'
+                                    stats.pendingApprovals > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-slate-900 dark:text-white'
                                 }`}>{stats.pendingApprovals}</h3>
                             </div>
                         </div>
 
                         {/* Card 3: Course Grades */}
-                        <div className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-violet-500/20 transition-all duration-300">
+                        <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-violet-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-violet-500/2 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
-                            <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-400 shadow-inner">
+                            <div className="w-12 h-12 rounded-xl bg-violet-500/10 flex items-center justify-center text-violet-600 dark:text-violet-400 shadow-inner">
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.62 48.62 0 0112 20.9c4.956-1.54 9.435-4.003 13.01-7.106m-22.96 0A48.474 48.474 0 015.753 8.284m12.446.084A48.474 48.474 0 0118.242 18m2.46-12.03a60.47 60.47 0 00-4.918-3.472m-1.077-1.168A48.554 48.554 0 0012 3c-2.202 0-4.312.273-6.328.791m10.262 1.636A48.67 48.67 0 0012 6c-1.343 0-2.65-.107-3.928-.314m8.54 1.135a59.842 59.842 0 01-3.642 12.286" />
                                 </svg>
                             </div>
                             <div>
                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Grades</p>
-                                <h3 className="text-2xl font-black mt-0.5 text-white tracking-tight">{stats.totalGrades}</h3>
+                                <h3 className="text-2xl font-black mt-0.5 text-slate-900 dark:text-white tracking-tight">{stats.totalGrades}</h3>
                             </div>
                         </div>
 
                         {/* Card 4: Unit Lessons */}
-                        <div className="bg-white/[0.02] backdrop-blur-xl border border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-emerald-500/20 transition-all duration-300">
+                        <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-emerald-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-emerald-500/2 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
-                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 shadow-inner">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-inner">
                                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-7.5c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125zm0-4.5h7.5c.621 0 1.125-.504 1.125-1.125V12.375c0-.621-.504-1.125-1.125-1.125h-7.5c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125zm0-4.5h7.5C12 9.375 12.5 8.87 12.5 8.25v-1.5c0-.621-.504-1.125-1.125-1.125h-7.5C3.25 5.625 2.75 6.13 2.75 6.75v1.5C2.75 8.87 3.25 9.375 3.375 9.375zm10.5 10.125h7.5c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-7.5c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125zm0-4.5h7.5c.621 0 1.125-.504 1.125-1.125V12.375c0-.621-.504-1.125-1.125-1.125h-7.5c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125zm0-4.5h7.5C22.75 9.375 23.25 8.87 23.25 8.25v-1.5c0-.621-.504-1.125-1.125-1.125h-7.5c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                 </svg>
                             </div>
                             <div>
                                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Unit Lessons</p>
-                                <h3 className="text-2xl font-black mt-0.5 text-white tracking-tight">{selectedUnit ? stats.selectedUnitLessons : '—'}</h3>
+                                <h3 className="text-2xl font-black mt-0.5 text-slate-900 dark:text-white tracking-tight">{selectedUnit ? stats.selectedUnitLessons : '—'}</h3>
                             </div>
                         </div>
                     </div>
@@ -674,9 +678,9 @@ export default function AdminDashboard() {
                     {activeTab === 'users' && (
                         <div className="space-y-6">
                             {/* Search and Filters */}
-                            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-white/[0.02] border border-white/[0.04] p-4 rounded-2xl backdrop-blur-md">
+                            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] p-4 rounded-2xl backdrop-blur-md shadow-sm dark:shadow-none">
                                 <div className="relative flex-1">
-                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
                                         <svg className="w-4.5 h-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
@@ -686,11 +690,11 @@ export default function AdminDashboard() {
                                         placeholder="Search students by name or ID..."
                                         value={userSearchQuery}
                                         onChange={e => setUserSearchQuery(e.target.value)}
-                                        className="w-full bg-slate-900/60 border border-white/5 rounded-xl pl-11 pr-4 py-2.5 text-sm placeholder-slate-500 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-white/5 rounded-xl pl-11 pr-4 py-2.5 text-sm placeholder-slate-400 dark:placeholder-slate-500 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/30 transition-all"
                                     />
                                 </div>
 
-                                <div className="flex gap-1.5 bg-slate-950 p-1 rounded-xl border border-white/5">
+                                <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-white/5">
                                     {(['all', 'pending', 'verified'] as const).map((mode) => (
                                         <button
                                             key={mode}
@@ -698,7 +702,7 @@ export default function AdminDashboard() {
                                             className={`px-4 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${
                                                 userFilter === mode
                                                     ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md'
-                                                    : 'text-slate-400 hover:text-slate-200'
+                                                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                                             }`}
                                         >
                                             {mode} ({
@@ -754,67 +758,67 @@ export default function AdminDashboard() {
                             )}
 
                             {/* Main User List Card */}
-                            <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl">
-                                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-white/5 flex items-center justify-between">
-                                    <h3 className="font-bold text-white text-xs sm:text-sm uppercase tracking-wider">Student Registry</h3>
+                            <div className="bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.05] rounded-2xl overflow-hidden backdrop-blur-xl shadow-md dark:shadow-2xl">
+                                <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between">
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm uppercase tracking-wider">Student Registry</h3>
                                     <span className="text-[11px] sm:text-xs text-slate-500 font-mono">Count: {getFilteredUsers().length}</span>
                                 </div>
 
                                 {getFilteredUsers().length === 0 ? (
                                     <div className="py-16 sm:py-20 text-center px-4">
                                         <div className="text-4xl mb-4 opacity-50">👥</div>
-                                        <p className="text-slate-400 text-sm font-semibold">No registry matching filters found.</p>
-                                        <p className="text-slate-600 text-xs mt-1">Try refining search parameters or filters.</p>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm font-semibold">No registry matching filters found.</p>
+                                        <p className="text-slate-400 dark:text-slate-600 text-xs mt-1">Try refining search parameters or filters.</p>
                                     </div>
                                 ) : (
                                     <>
                                         {/* Mobile Card List (< md) */}
-                                        <div className="block md:hidden divide-y divide-white/[0.04] p-3 space-y-3">
+                                        <div className="block md:hidden divide-y divide-slate-200/60 dark:divide-white/[0.04] p-3 space-y-3">
                                             {getFilteredUsers().map(u => (
-                                                <div key={u.id} className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-3.5 space-y-3">
+                                                <div key={u.id} className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/[0.04] rounded-xl p-3.5 space-y-3 shadow-xs">
                                                     <div className="flex items-center justify-between gap-3">
                                                         <div className="flex items-center gap-2.5 min-w-0">
                                                             <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs border shrink-0 ${
                                                                 u.is_verified
-                                                                    ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                                                                    : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                                    ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                                                    : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20'
                                                             }`}>
                                                                 {u.full_name?.charAt(0).toUpperCase() || '?'}
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <p className="font-bold text-white text-xs sm:text-sm truncate">{u.full_name || 'Anonymous Student'}</p>
+                                                                <p className="font-bold text-slate-900 dark:text-white text-xs sm:text-sm truncate">{u.full_name || 'Anonymous Student'}</p>
                                                                 <p className="text-[10px] text-slate-500 font-mono truncate">{u.id}</p>
                                                             </div>
                                                         </div>
                                                         <div>
                                                             {u.is_verified ? (
-                                                                <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                                                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full" />
+                                                                <span className="inline-flex items-center gap-1 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                                                                    <span className="w-1.5 h-1.5 bg-green-500 dark:bg-green-400 rounded-full" />
                                                                     Verified
                                                                 </span>
                                                             ) : (
-                                                                <span className="inline-flex items-center gap-1 bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded-full text-[10px] font-semibold">
-                                                                    <span className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse" />
+                                                                <span className="inline-flex items-center gap-1 bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                                                                    <span className="w-1.5 h-1.5 bg-yellow-500 dark:bg-yellow-400 rounded-full animate-pulse" />
                                                                     Pending
                                                                 </span>
                                                             )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-white/[0.04]">
+                                                    <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-200/60 dark:border-white/[0.04]">
                                                         <span>Joined: {new Date(u.created_at).toLocaleDateString()}</span>
                                                         <div>
                                                             {u.is_verified ? (
                                                                 <button
                                                                     onClick={() => handleRejectUser(u.id, u.full_name || '')}
-                                                                    className="text-xs font-bold text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 transition-all"
+                                                                    className="text-xs font-bold text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 transition-all cursor-pointer"
                                                                 >
                                                                     Revoke Access
                                                                 </button>
                                                             ) : (
                                                                 <button
                                                                     onClick={() => handleVerifyUser(u.id, u.full_name || '')}
-                                                                    className="text-xs font-bold bg-green-500 text-white px-3 py-1.5 rounded-lg shadow-md shadow-green-500/20 transition-all"
+                                                                    className="text-xs font-bold bg-green-600 text-white px-3 py-1.5 rounded-lg shadow-md shadow-green-600/20 transition-all cursor-pointer"
                                                                 >
                                                                     Approve Access
                                                                 </button>
@@ -829,27 +833,27 @@ export default function AdminDashboard() {
                                         <div className="hidden md:block overflow-x-auto">
                                             <table className="w-full text-left border-collapse">
                                                 <thead>
-                                                    <tr className="border-b border-white/5 bg-white/[0.01]">
-                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Student Information</th>
-                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Status</th>
-                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-400 uppercase tracking-widest">Enrollment Date</th>
+                                                    <tr className="border-b border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.01]">
+                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Student Information</th>
+                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</th>
+                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Enrollment Date</th>
                                                         <th className="px-6 py-4 text-right"></th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-white/[0.03]">
+                                                <tbody className="divide-y divide-slate-200/60 dark:divide-white/[0.03]">
                                                     {getFilteredUsers().map(u => (
-                                                        <tr key={u.id} className="hover:bg-white/[0.01] transition-colors group">
+                                                        <tr key={u.id} className="hover:bg-slate-50/80 dark:hover:bg-white/[0.01] transition-colors group">
                                                             <td className="px-6 py-4">
                                                                 <div className="flex items-center gap-3">
                                                                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-bold text-xs border ${
                                                                         u.is_verified
-                                                                            ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
-                                                                            : 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20'
+                                                                            ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20'
+                                                                            : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20'
                                                                     }`}>
                                                                         {u.full_name?.charAt(0).toUpperCase() || '?'}
                                                                     </div>
                                                                     <div>
-                                                                        <p className="font-bold text-white text-sm">{u.full_name || 'Anonymous Student'}</p>
+                                                                        <p className="font-bold text-slate-900 dark:text-white text-sm">{u.full_name || 'Anonymous Student'}</p>
                                                                         <p className="text-[10px] text-slate-500 font-mono mt-0.5">{u.id}</p>
                                                                     </div>
                                                                 </div>
