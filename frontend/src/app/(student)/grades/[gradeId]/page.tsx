@@ -112,10 +112,10 @@ export default function GradePage() {
             {/* Top-Right Theme Toggle */}
             <ThemeToggle />
 
-            {/* Profile Info Badge (Clickable link to /profile) */}
+            {/* Profile Info Badge (Desktop / Tablet view) */}
             <Link
               href="/profile"
-              className="flex items-center gap-2 sm:gap-3 bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-xl sm:rounded-2xl px-2.5 sm:px-3.5 py-1 sm:py-1.5 shadow-sm transition group"
+              className="hidden md:flex items-center gap-2 sm:gap-3 bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-xl sm:rounded-2xl px-2.5 sm:px-3.5 py-1 sm:py-1.5 shadow-sm transition group"
               title="View and Edit Profile"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg sm:rounded-xl overflow-hidden bg-indigo-500/15 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 border border-indigo-500/20">

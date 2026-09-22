@@ -111,10 +111,10 @@ export default function Dashboard() {
             {/* Top-Right Theme Toggle Button */}
             <ThemeToggle />
 
-            {/* Profile Info Badge (Clickable link to /profile) */}
+            {/* Profile Info Badge (Desktop / Tablet view) */}
             <Link
               href="/profile"
-              className="flex items-center gap-3 bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-3.5 py-1.5 shadow-sm transition group"
+              className="hidden md:flex items-center gap-3 bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-2xl px-3.5 py-1.5 shadow-sm transition group"
               title="View and Edit Profile"
             >
               <div className="w-8 h-8 rounded-xl overflow-hidden bg-indigo-500/15 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-xs shrink-0 border border-indigo-500/20">
@@ -142,24 +142,24 @@ export default function Dashboard() {
               {profile?.is_verified ? (
                 <span className="flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">
                   <CheckCircle2 className="w-2.5 h-2.5" />
-                  <span className="hidden md:inline">Verified</span>
+                  <span>Verified</span>
                 </span>
               ) : (
                 <span className="flex items-center gap-1 bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">
                   <ShieldAlert className="w-2.5 h-2.5" />
-                  <span className="hidden md:inline">Pending</span>
+                  <span>Pending</span>
                 </span>
               )}
             </Link>
 
-            {/* Sign Out Button */}
+            {/* Sign Out Button (Desktop / Tablet view) */}
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition duration-200"
+              className="hidden md:flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition duration-200"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden md:inline">Sign Out</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>

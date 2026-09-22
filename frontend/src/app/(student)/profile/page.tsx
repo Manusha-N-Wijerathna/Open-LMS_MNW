@@ -290,11 +290,11 @@ export default function ProfilePage() {
             <ThemeToggle />
             <button
               onClick={signOut}
-              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold px-3.5 py-2 rounded-xl transition duration-200"
+              className="hidden md:flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 hover:border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold px-3.5 py-2 rounded-xl transition duration-200"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
