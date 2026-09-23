@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { TechAnimatedBackground } from '@/components/TechAnimatedBackground'
+import { InitialLoadingScreen } from '@/components/InitialLoadingScreen'
 import api from '@/lib/api'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
         <ThemeProvider>
+          <InitialLoadingScreen />
           <TechAnimatedBackground />
           {children}
         </ThemeProvider>
