@@ -567,13 +567,7 @@ export default function AdminDashboard() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex relative overflow-hidden transition-colors duration-300">
-            {/* Animated Grid Background */}
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] dark:bg-[linear-gradient(rgba(99,102,241,0.015)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.015)_1px,transparent_1px)] bg-[size:50px_50px] pointer-events-none" />
-
-            {/* Glowing orbs */}
-            <div className="absolute top-10 left-10 w-96 h-96 bg-indigo-600/5 dark:bg-indigo-600/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
-            <div className="absolute bottom-10 right-10 w-[400px] h-[400px] bg-violet-600/5 dark:bg-violet-600/10 rounded-full blur-3xl pointer-events-none animate-pulse [animation-delay:2s]" />
+        <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 flex relative overflow-hidden transition-colors duration-300">
 
             {/* Mobile Backdrop Overlay */}
             {sidebarOpen && (

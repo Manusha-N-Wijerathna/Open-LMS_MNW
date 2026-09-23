@@ -82,11 +82,7 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-between relative overflow-hidden bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
-      {/* Background Mesh Grids */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none -z-10" />
-      <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none animate-pulse -z-10" />
-      <div className="absolute bottom-1/4 right-1/3 w-80 h-80 bg-violet-500/10 dark:bg-violet-600/15 rounded-full blur-3xl pointer-events-none animate-pulse [animation-delay:1s] -z-10" />
+    <div className="min-h-screen flex flex-col justify-between relative overflow-hidden bg-transparent text-slate-900 dark:text-slate-100 transition-colors duration-300">
 
       {/* Top Header Bar */}
       <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between relative z-20">

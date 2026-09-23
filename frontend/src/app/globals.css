@@ -71,3 +71,39 @@ body {
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out both;
 }
+
+@keyframes techScan {
+  0% {
+    top: -5%;
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.85;
+  }
+  85% {
+    opacity: 0.85;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+@keyframes techPulse {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.12) translate(15px, -15px);
+    opacity: 1;
+  }
+}
+
+.animate-techScan {
+  animation: techScan 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-techPulse {
+  animation: techPulse 14s ease-in-out infinite;
+}

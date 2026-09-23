@@ -239,7 +239,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-transparent">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent"></div>
           <span className="text-slate-500 dark:text-slate-400 font-medium text-sm">Loading profile...</span>
@@ -252,13 +252,7 @@ export default function ProfilePage() {
   const avatarUrl = profile?.avatar_url
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative overflow-hidden transition-colors duration-300">
-      {/* Background Mesh Grid */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none -z-10" />
-
-      {/* Ambient Decorative Glows */}
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 right-0 w-80 h-80 bg-violet-600/10 dark:bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 relative overflow-hidden transition-colors duration-300">
 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 px-6 py-4 transition-all">

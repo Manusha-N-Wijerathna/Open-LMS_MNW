@@ -72,8 +72,7 @@ export default function GradePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl" />
+      <div className="min-h-screen flex items-center justify-center bg-transparent">
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent"></div>
           <span className="text-slate-500 dark:text-slate-400 font-medium text-sm tracking-wide">Loading curriculum...</span>
@@ -83,11 +82,7 @@ export default function GradePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 relative overflow-hidden flex flex-col transition-colors duration-300">
-      {/* Background Mesh Grids & Glows */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none -z-10" />
-      <div className="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/10 dark:bg-indigo-600/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/4 right-0 w-80 h-80 bg-violet-600/5 dark:bg-violet-600/15 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 relative overflow-hidden flex flex-col transition-colors duration-300">
 
       {/* Header / Navbar */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-white/5 px-4 sm:px-6 py-3.5 sm:py-4 transition-all">
