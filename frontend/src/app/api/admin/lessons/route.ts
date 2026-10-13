@@ -71,3 +71,30 @@ export async function POST(request: NextRequest) {
     return jsonError('Invalid request body or server error', 400)
   }
 }
+
+export async function GET(request: NextRequest) {
+  const auth = await requireAdmin(request)
+  if ('errorResponse' in auth) {
+    return auth.errorResponse
+  }
+
+  try {
+    const db = await getDbClient(request)
+    const { data: lessons, error } = await db
+      .from('lessons')
+      .select('id, title, description, thumbnail_url, drive_url, unit_id, display_order, created_at')
+      .order('id', { ascending: false })
+      .limit(20)
+
+    if (error) {
+      console.error('Error fetching lessons:', error)
+      return jsonError(error.message || 'Failed to fetch lessons', 500)
+    }
+
+    return NextResponse.json(lessons || [], { status: 200 })
+  } catch (err) {
+    console.error('Unexpected error fetching lessons:', err)
+    return jsonError('Failed to fetch lessons', 500)
+  }
+}
+

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import api from '@/lib/api'
 import { formatDriveThumbnail, getLessonThumbnail, extractDriveFileId } from '@/lib/drive'
 import { ThemeToggle } from '@/components/ThemeToggle'
+import { BannerGeneratorStudio } from '@/components/admin/BannerGeneratorStudio'
 
 interface Profile {
     id: string
@@ -47,7 +48,8 @@ export default function AdminDashboard() {
     // Auth & App state
     const [verifying, setVerifying] = useState(true)
     const [adminUser, setAdminUser] = useState<Profile | null>(null)
-    const [activeTab, setActiveTab] = useState<'users' | 'content'>('users')
+    const [activeTab, setActiveTab] = useState<'users' | 'content' | 'broadcast'>('users')
+    const [broadcastLesson, setBroadcastLesson] = useState<{ title: string; url?: string } | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
 
     // Data lists
@@ -112,6 +114,17 @@ export default function AdminDashboard() {
             setToasts(prev => prev.filter(t => t.id !== id))
         }, 4000)
     }
+
+    // Check for direct tab query parameter on mount
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search)
+            const tabParam = params.get('tab')
+            if (tabParam === 'broadcast' || tabParam === 'announcements') {
+                setActiveTab('broadcast')
+            }
+        }
+    }, [])
 
     // Auth verification on mount
     useEffect(() => {
@@ -648,6 +661,30 @@ export default function AdminDashboard() {
                                 </svg>
                                 <span>Content Library</span>
                             </button>
+
+                            <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold px-3 pt-3 mb-2">Broadcasting</p>
+
+                            <button
+                                onClick={() => { 
+                                    setActiveTab('broadcast'); 
+                                    if (typeof window !== 'undefined' && window.innerWidth < 768) setSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group ${
+                                    activeTab === 'broadcast'
+                                        ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 border-l-2 border-cyan-500 text-cyan-600 dark:text-cyan-400 shadow-lg shadow-cyan-500/5 font-bold'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <svg className="w-5 h-5 transition-colors group-hover:text-cyan-500 dark:group-hover:text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                    </svg>
+                                    <span>Video Announcements</span>
+                                </div>
+                                <span className="text-[10px] font-extrabold uppercase bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 px-2 py-0.5 rounded-full">
+                                    Studio
+                                </span>
+                            </button>
                         </nav>
                     </div>
 
@@ -691,7 +728,7 @@ export default function AdminDashboard() {
                             </svg>
                         </button>
                         <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white capitalize truncate">
-                            {activeTab === 'users' ? 'Users Management' : 'Content Library'}
+                            {activeTab === 'users' ? 'Users Management' : activeTab === 'content' ? 'Content Library' : 'Video Announcement Studio'}
                         </h1>
                     </div>
 
@@ -709,7 +746,8 @@ export default function AdminDashboard() {
 
                 <main className="flex-1 p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full">
                     {/* Top Stats Bar */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+                    {activeTab !== 'broadcast' && (
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {/* Card 1: Total Students */}
                         <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-indigo-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
                             <div className="absolute inset-0 bg-indigo-500/2 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
@@ -770,6 +808,7 @@ export default function AdminDashboard() {
                             </div>
                         </div>
                     </div>
+                    )}
 
                     {/* ──────────────── USERS TAB ──────────────── */}
                     {activeTab === 'users' && (
@@ -1495,6 +1534,24 @@ export default function AdminDashboard() {
                                                                         </svg>
                                                                     </button>
 
+                                                                    {/* Broadcast / Announcement Button */}
+                                                                    <button
+                                                                        onClick={() => {
+                                                                            setBroadcastLesson({
+                                                                                title: lesson.title,
+                                                                                url: `https://ictforfuturelms.vercel.app/`
+                                                                            })
+                                                                            setActiveTab('broadcast')
+                                                                        }}
+                                                                        className="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:text-cyan-700 dark:hover:text-cyan-300 px-2.5 py-1.5 rounded-lg bg-cyan-50 dark:bg-cyan-500/10 hover:bg-cyan-100 dark:hover:bg-cyan-500/20 transition flex items-center gap-1 cursor-pointer"
+                                                                        title="Create Announcement Banner for this lesson"
+                                                                    >
+                                                                        <svg className="w-3.5 h-3.5 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                                                        </svg>
+                                                                        <span className="hidden sm:inline">Banner</span>
+                                                                    </button>
+
                                                                     {/* Edit Button */}
                                                                     <button
                                                                         onClick={() => openEditLessonModal(lesson)}
@@ -1528,6 +1585,20 @@ export default function AdminDashboard() {
                             </div>
                         )
                     })()}
+
+                    {/* ──────────────── VIDEO ANNOUNCEMENTS & BANNER STUDIO TAB ──────────────── */}
+                    {activeTab === 'broadcast' && (
+                        <BannerGeneratorStudio
+                            initialLesson={broadcastLesson}
+                            availableLessons={lessons.map(l => ({
+                                id: l.id,
+                                title: l.title,
+                                description: l.description,
+                                created_at: l.created_at
+                            }))}
+                            onNotify={showToast}
+                        />
+                    )}
                 </main>
             </div>
 
