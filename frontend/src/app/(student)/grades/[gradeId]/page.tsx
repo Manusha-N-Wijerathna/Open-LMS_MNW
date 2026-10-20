@@ -17,12 +17,15 @@ import {
   ShieldAlert, 
   CheckCircle2,
   Lock,
-  Sparkles
+  Sparkles,
+  Layers
 } from 'lucide-react'
 
 interface Unit { 
   id: number
-  name: string 
+  name: string
+  display_order?: number
+  lessons?: { count: number }[]
 }
 
 interface Lesson { 
@@ -34,11 +37,13 @@ interface Lesson {
 }
 
 export default function GradePage() {
-  const { gradeId } = useParams()
+  const params = useParams()
+  const gradeId = params?.gradeId as string
   const router = useRouter()
   const { user, profile, loading } = useAuthStore()
   const [units, setUnits] = useState<Unit[]>([])
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const [gradeName, setGradeName] = useState<string>('')
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [loadingLessons, setLoadingLessons] = useState(false)
   const [brokenImages, setBrokenImages] = useState<Record<number, boolean>>({})
@@ -49,6 +54,8 @@ export default function GradePage() {
       router.push('/login')
       return
     }
+
+    // Fetch units and grades
     api.get(`/content/grades/${gradeId}/units`).then(res => {
       setUnits(res.data)
       if (res.data.length > 0) selectUnit(res.data[0])
@@ -56,6 +63,13 @@ export default function GradePage() {
       console.error("Error fetching units:", err)
       setUnits([])
     })
+
+    api.get('/content/grades').then(res => {
+      const currentGrade = res.data.find(
+        (g: { id: number; name: string }) => String(g.id) === String(gradeId)
+      )
+      if (currentGrade) setGradeName(currentGrade.name)
+    }).catch(() => {})
   }, [user, gradeId, loading, router])
 
   const selectUnit = async (unit: Unit) => {
@@ -93,7 +107,7 @@ export default function GradePage() {
               className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] hover:bg-slate-100 dark:hover:bg-white/[0.06] px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl text-xs font-bold transition shadow-sm"
             >
               <ChevronLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Dashboard</span>
+              <span>Dashboard</span>
             </Link>
             <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block" />
             <div className="flex items-center gap-2">
@@ -107,7 +121,7 @@ export default function GradePage() {
             {/* Top-Right Theme Toggle */}
             <ThemeToggle />
 
-            {/* Profile Info Badge (Desktop / Tablet view) */}
+            {/* Profile Info Badge */}
             <Link
               href="/profile"
               className="hidden md:flex items-center gap-2 sm:gap-3 bg-white dark:bg-white/[0.03] hover:bg-slate-50 dark:hover:bg-white/[0.06] border border-slate-200 dark:border-white/[0.08] rounded-xl sm:rounded-2xl px-2.5 sm:px-3.5 py-1 sm:py-1.5 shadow-sm transition group"
@@ -149,36 +163,110 @@ export default function GradePage() {
         </div>
       </header>
 
-      {/* Content Area */}
-      <div className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10 flex flex-col md:flex-row gap-6 md:gap-8">
+      {/* MOBILE RESPONSIVE VIEW: Units displayed as cards, clicking navigates to the dedicated lesson page */}
+      <div className="md:hidden flex-1 max-w-6xl w-full mx-auto px-4 py-6 relative z-10 flex flex-col gap-5">
         
-        {/* Unit Selector: Mobile Horizontal Chip Bar + Desktop Sidebar */}
-        <aside className="w-full md:w-64 shrink-0 flex flex-col gap-2 sm:gap-3">
+        {/* Mobile Header Banner */}
+        <div className="bg-gradient-to-r from-indigo-50/90 via-white to-violet-50/90 dark:from-indigo-950/20 dark:via-slate-900/40 dark:to-violet-950/20 border border-slate-200/80 dark:border-white/[0.06] rounded-2xl p-4 sm:p-5 shadow-sm space-y-2">
+          <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-wider uppercase">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>{gradeName ? `${gradeName} Curriculum` : 'Curriculum Lessons'}</span>
+          </div>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white">
+            Curriculum Lessons & Units
+          </h1>
+          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            Select a lesson topic below to open its dedicated page and view all video classes & materials.
+          </p>
+        </div>
+
+        {/* Pending Verification Notice */}
+        {!profile?.is_verified && (
+          <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-3.5">
+            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-bold text-amber-800 dark:text-amber-300 text-xs">Verification Pending</h4>
+              <p className="text-amber-700/90 dark:text-amber-400/80 text-[11px] mt-0.5 leading-relaxed">
+                You can browse all lesson topics freely. Direct video links will unlock once verified.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Units/Lessons Cards Grid */}
+        {units.length === 0 ? (
+          <div className="text-center py-12 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl bg-white/40 dark:bg-white/[0.01]">
+            <BookOpen className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <p className="text-slate-500 text-xs font-medium">No lessons or units published yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {units.map((unit, index) => {
+              const lessonCount = unit.lessons?.[0]?.count ?? 0
+              return (
+                <Link
+                  key={unit.id}
+                  href={`/grades/${gradeId}/units/${unit.id}`}
+                  className="bg-white dark:bg-slate-900/60 hover:bg-slate-50 dark:hover:bg-slate-900/90 border border-slate-200/80 dark:border-white/[0.06] hover:border-indigo-500/40 dark:hover:border-indigo-500/40 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-3 group active:scale-[0.99]"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500/10 to-violet-500/15 dark:from-indigo-500/20 dark:to-violet-500/20 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-xs shrink-0 group-hover:scale-105 transition-transform">
+                        {String(index + 1).padStart(2, '0')}
+                      </div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                        Lesson {index + 1}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200/60 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-full shrink-0">
+                      {lessonCount} {lessonCount === 1 ? 'Lesson' : 'Lessons'}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-snug">
+                      {unit.name}
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2.5 border-t border-slate-100 dark:border-white/5 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+                    <span>Show Lessons</span>
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* DESKTOP VIEW: Left sidebar for units + Right main panel for lessons */}
+      <div className="hidden md:flex flex-1 max-w-6xl w-full mx-auto px-6 py-8 relative z-10 flex-row gap-8">
+        
+        {/* Unit Selector: Desktop Sidebar */}
+        <aside className="w-64 shrink-0 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider ml-1">
               Curriculum Units
             </h2>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 md:hidden ml-auto">
-              Swipe to switch →
-            </span>
           </div>
           
           {units.length === 0 ? (
             <div className="text-slate-500 text-xs italic py-2 ml-1">No units created yet.</div>
           ) : (
-            <div className="flex md:flex-col overflow-x-auto md:overflow-y-auto max-h-none md:max-h-[70vh] gap-2 pb-2 md:pb-0 pr-1 no-scrollbar scroll-smooth">
+            <div className="flex flex-col overflow-y-auto max-h-[70vh] gap-2 pr-1 no-scrollbar scroll-smooth">
               {units.map(unit => (
                 <button
                   key={unit.id}
                   onClick={() => selectUnit(unit)}
-                  className={`shrink-0 md:shrink md:w-full text-left px-3.5 sm:px-4 py-2.5 sm:py-3.5 rounded-xl sm:rounded-2xl text-xs sm:text-sm font-semibold transition-all duration-200 border flex items-center justify-between gap-3 group whitespace-nowrap md:whitespace-normal ${
+                  className={`w-full text-left px-4 py-3.5 rounded-2xl text-sm font-semibold transition-all duration-200 border flex items-center justify-between gap-3 group whitespace-normal ${
                     selectedUnit?.id === unit.id
                       ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white border-transparent shadow-lg shadow-indigo-500/20'
                       : 'bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/[0.04] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] shadow-sm'
                   }`}
                 >
                   <span className="truncate">{unit.name}</span>
-                  <ChevronRight className={`w-4 h-4 hidden md:block transition duration-200 ${
+                  <ChevronRight className={`w-4 h-4 transition duration-200 ${
                     selectedUnit?.id === unit.id 
                       ? 'text-white' 
                       : 'text-slate-400 dark:text-slate-600 group-hover:text-slate-700 dark:group-hover:text-slate-300 group-hover:translate-x-0.5'
@@ -193,13 +281,31 @@ export default function GradePage() {
         <main className="flex-1 space-y-6">
           
           {/* Selected Unit Title Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-white/5">
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              {selectedUnit?.name || 'Select a unit'}
-            </h2>
-            <span className="self-start sm:self-auto text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-bold">
-              {lessons.length} Lesson{lessons.length !== 1 ? 's' : ''} available
-            </span>
+          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-200/80 dark:border-white/5">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-1">
+                {gradeName ? `${gradeName} Curriculum` : 'Curriculum'}
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                {selectedUnit?.name || 'Select a unit'}
+              </h2>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-3 py-1 rounded-full font-bold">
+                {lessons.length} Lesson{lessons.length !== 1 ? 's' : ''} available
+              </span>
+              {selectedUnit && (
+                <Link
+                  href={`/grades/${gradeId}/units/${selectedUnit.id}`}
+                  className="text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 flex items-center gap-1 ml-2 transition"
+                  title="Open dedicated page"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Dedicated page</span>
+                </Link>
+              )}
+            </div>
           </div>
 
           {/* Pending Verification Notice */}
@@ -238,6 +344,7 @@ export default function GradePage() {
                   {/* Video/Resource Thumbnail Preview */}
                   <div className="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/80 h-40 flex items-center justify-center overflow-hidden relative">
                     {getLessonThumbnail(lesson.thumbnail_url, lesson.drive_url) && !brokenImages[lesson.id] ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img 
                         src={getLessonThumbnail(lesson.thumbnail_url, lesson.drive_url)!} 
                         alt={lesson.title} 
