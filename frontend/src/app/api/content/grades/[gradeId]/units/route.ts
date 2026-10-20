@@ -19,7 +19,7 @@ export async function GET(
 
     const { data: units, error } = await db
       .from('units')
-      .select('*')
+      .select('*, lessons(count)')
       .eq('grade_id', parsedGradeId)
       .order('display_order', { ascending: true })
 
