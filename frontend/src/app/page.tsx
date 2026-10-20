@@ -18,6 +18,7 @@ import {
   X,
   Compass
 } from 'lucide-react'
+import { ExamCountdownSection } from '@/components/ExamCountdownSection'
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -45,8 +46,8 @@ export default function LandingPage() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
-              Features
+            <a href="#exam-countdown" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
+              Exam Countdown
             </a>
             <a href="#benefits" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
               Curriculum
@@ -93,11 +94,11 @@ export default function LandingPage() {
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200/80 dark:border-white/5 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl px-5 py-6 flex flex-col gap-4 animate-in slide-in-from-top-4 duration-200 shadow-2xl">
             <a 
-              href="#features" 
+              href="#exam-countdown" 
               onClick={() => setMobileMenuOpen(false)}
               className="text-base text-slate-700 dark:text-slate-300 font-medium py-1"
             >
-              Features
+              Exam Countdown
             </a>
             <a 
               href="#benefits" 
@@ -201,7 +202,7 @@ export default function LandingPage() {
                 
                 <div className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-3 border border-slate-200/80 dark:border-white/10 overflow-hidden">
                   <Image
-                    src="/lms_hero.png"
+                    src="/hero01.png"
                     alt="ICT LMS Digital Classroom Illustration"
                     width={600}
                     height={450}
@@ -215,68 +216,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Grid Section */}
-      <section id="features" className="py-20 bg-white dark:bg-slate-900/50 border-y border-slate-200/80 dark:border-white/5 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <h2 className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
-              Core Capabilities
-            </h2>
-            <p className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-              Designed For Academic Excellence
-            </p>
-            <p className="text-slate-600 dark:text-slate-400 text-base sm:text-lg">
-              Everything a student needs to study units, access Google Drive lesson content, and monitor curriculum progress.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Feature 1 */}
-            <div className="p-7 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-950/60 hover:border-indigo-500/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
-                <BookOpen className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">Curriculum Units</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Structured grade-by-grade units with ordered learning roadmaps and comprehensive study outlines.
-              </p>
-            </div>
-
-            {/* Feature 2 */}
-            <div className="p-7 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-950/60 hover:border-indigo-500/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-12 h-12 rounded-2xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center mb-5 group-hover:bg-violet-600 group-hover:text-white transition-colors duration-300">
-                <Layers className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">Video Streaming</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Seamless Google Drive integrated video lectures with high-res automatic thumbnail previews.
-              </p>
-            </div>
-
-            {/* Feature 3 */}
-            <div className="p-7 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-950/60 hover:border-indigo-500/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-5 group-hover:bg-cyan-600 group-hover:text-white transition-colors duration-300">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">Verified Access</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Protected learning materials secured with admin profile verification and role management.
-              </p>
-            </div>
-
-            {/* Feature 4 */}
-            <div className="p-7 rounded-3xl border border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-slate-950/60 hover:border-indigo-500/30 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-5 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
-                <Compass className="w-6 h-6" />
-              </div>
-              <h3 className="font-bold text-lg text-slate-900 dark:text-white mb-2">Adaptive Modes</h3>
-              <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                Comfortable viewing experience with instant top-right light and dark theme switching.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Exam Countdown & Schedule Section */}
+      <ExamCountdownSection />
 
       {/* CTA Banner */}
       <section className="py-20 bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-800 text-white relative overflow-hidden">
