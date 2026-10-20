@@ -6,6 +6,7 @@ import api from '@/lib/api'
 import { formatDriveThumbnail, getLessonThumbnail, extractDriveFileId } from '@/lib/drive'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { BannerGeneratorStudio } from '@/components/admin/BannerGeneratorStudio'
+import { ExamManagerStudio } from '@/components/admin/ExamManagerStudio'
 
 interface Profile {
     id: string
@@ -48,7 +49,7 @@ export default function AdminDashboard() {
     // Auth & App state
     const [verifying, setVerifying] = useState(true)
     const [adminUser, setAdminUser] = useState<Profile | null>(null)
-    const [activeTab, setActiveTab] = useState<'users' | 'content' | 'broadcast'>('users')
+    const [activeTab, setActiveTab] = useState<'users' | 'content' | 'broadcast' | 'exams'>('users')
     const [broadcastLesson, setBroadcastLesson] = useState<{ title: string; url?: string } | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
 
@@ -662,6 +663,28 @@ export default function AdminDashboard() {
                                 <span>Content Library</span>
                             </button>
 
+                            <button
+                                onClick={() => { 
+                                    setActiveTab('exams'); 
+                                    if (typeof window !== 'undefined' && window.innerWidth < 768) setSidebarOpen(false);
+                                }}
+                                className={`w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group ${
+                                    activeTab === 'exams'
+                                        ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/10 border-l-2 border-amber-500 text-amber-600 dark:text-amber-400 shadow-lg shadow-amber-500/5 font-bold'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <svg className="w-5 h-5 transition-colors group-hover:text-amber-500 dark:group-hover:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                    </svg>
+                                    <span>Exam Timers</span>
+                                </div>
+                                <span className="text-[10px] font-extrabold uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full">
+                                    Live
+                                </span>
+                            </button>
+
                             <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold px-3 pt-3 mb-2">Broadcasting</p>
 
                             <button
@@ -746,7 +769,7 @@ export default function AdminDashboard() {
 
                 <main className="flex-1 p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full">
                     {/* Top Stats Bar */}
-                    {activeTab !== 'broadcast' && (
+                    {activeTab !== 'broadcast' && activeTab !== 'exams' && (
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {/* Card 1: Total Students */}
                         <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-indigo-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
@@ -1598,6 +1621,11 @@ export default function AdminDashboard() {
                             }))}
                             onNotify={showToast}
                         />
+                    )}
+
+                    {/* ──────────────── EXAM TIMERS & COUNTDOWN STUDIO TAB ──────────────── */}
+                    {activeTab === 'exams' && (
+                        <ExamManagerStudio onNotify={showToast} />
                     )}
                 </main>
             </div>
