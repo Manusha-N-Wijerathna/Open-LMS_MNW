@@ -47,6 +47,10 @@ export default function LandingPage() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-8">
+            <Link href="/past-papers" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors flex items-center gap-1.5">
+              <span>Past Papers</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Free</span>
+            </Link>
             <a href="#exam-countdown" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
               Exam Countdown
             </a>
@@ -226,7 +230,7 @@ export default function LandingPage() {
       {/* Exam Countdown & Schedule Section */}
       <ExamCountdownSection />
 
-      {/* Past Papers are Soon - Professional Banner */}
+      {/* Past Papers Library - Professional Banner */}
       <section className="py-20 relative overflow-hidden bg-slate-900 border-y border-slate-800 text-white">
         {/* Ambient Glows */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[600px] h-72 bg-gradient-to-r from-amber-500/15 via-indigo-500/15 to-violet-500/15 rounded-full blur-3xl pointer-events-none" />
@@ -236,15 +240,15 @@ export default function LandingPage() {
           
           {/* Heading */}
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Papers Library {' '}
+            Official Examination {' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 bg-clip-text text-transparent">
-              Soon
+              Papers Library
             </span>
           </h2>
 
           {/* Description */}
           <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            We are curating a comprehensive repository of ICT past papers, target model questions, and official marking schemes with detailed step-by-step solutions.
+            Access genuine Sri Lankan G.C.E. A/L, O/L, and scholarship past papers, model questions, and official marking schemes with instant preview and download.
           </p>
 
           {/* Feature highlights pill grid */}
@@ -277,10 +281,11 @@ export default function LandingPage() {
           {/* CTA Links */}
           <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
-              href="/register"
-              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold shadow-lg shadow-amber-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              href="/past-papers"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold shadow-lg shadow-amber-500/25 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 inline-flex items-center justify-center gap-2"
             >
-              Get Early Access
+              <FileText className="w-5 h-5" />
+              <span>Browse Past Papers</span>
             </Link>
             <a
               href="https://chat.whatsapp.com/JCS7lR5yUye6oSBcybGJJn"
@@ -312,6 +317,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">Navigation</h4>
               <ul className="space-y-2 text-sm">
+                <li><Link href="/past-papers" className="hover:text-white transition-colors">Past Papers Library</Link></li>
                 <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
                 <li><Link href="/login" className="hover:text-white transition-colors">Student Login</Link></li>
                 <li><Link href="/register" className="hover:text-white transition-colors">Student Register</Link></li>

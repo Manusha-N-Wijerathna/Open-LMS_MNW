@@ -76,6 +76,37 @@ export function formatDriveEmbedUrl(url?: string | null): string | null {
   return trimmed
 }
 
+export function formatDriveDownloadUrl(url?: string | null): string | null {
+  if (!url || typeof url !== 'string' || !url.trim()) return null
+  const trimmed = url.trim()
+  const fileId = extractDriveFileId(trimmed)
+  if (fileId) {
+    return `https://drive.google.com/uc?export=download&id=${fileId}`
+  }
+  return null
+}
+
+export function formatDriveOpenUrl(url?: string | null): string | null {
+  if (!url || typeof url !== 'string' || !url.trim()) return null
+  const trimmed = url.trim()
+  const fileId = extractDriveFileId(trimmed)
+  if (fileId) {
+    return `https://drive.google.com/file/d/${fileId}/view?usp=sharing`
+  }
+  return null
+}
+
+export function validateDriveFileId(input?: string | null): { valid: boolean; fileId: string | null; error?: string } {
+  if (!input || typeof input !== 'string' || !input.trim()) {
+    return { valid: false, fileId: null, error: 'Google Drive URL or File ID is required' }
+  }
+  const fileId = extractDriveFileId(input)
+  if (!fileId) {
+    return { valid: false, fileId: null, error: 'Invalid Google Drive URL or File ID format' }
+  }
+  return { valid: true, fileId }
+}
+
 export function getLessonThumbnail(thumbnailUrl?: string | null, driveUrl?: string | null, size: number = 1000): string | null {
   if (thumbnailUrl && thumbnailUrl.trim()) {
     return formatDriveThumbnail(thumbnailUrl, size)
@@ -85,3 +116,4 @@ export function getLessonThumbnail(thumbnailUrl?: string | null, driveUrl?: stri
   }
   return null
 }
+
