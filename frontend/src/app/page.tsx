@@ -240,7 +240,7 @@ export default function LandingPage() {
           
           {/* Heading */}
           <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            Official Examination {' '}
+            Examination {' '}
             <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-200 bg-clip-text text-transparent">
               Papers Library
             </span>
@@ -308,10 +308,10 @@ export default function LandingPage() {
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold">
                   <GraduationCap className="w-5 h-5" />
                 </div>
-                <span className="font-extrabold text-xl text-white tracking-tight">ICT LMS</span>
+                <span className="font-extrabold text-xl text-white tracking-tight">#ict_for_future</span>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-                #ict_for_future - Modern educational management system empowering students and educators.
+               Modern educational management system empowering students and educators.
               </p>
             </div>
             <div>
@@ -333,7 +333,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">Developer</h4>
               <p className="text-xs text-slate-400 leading-relaxed mb-2">
-                Designed & Developed by Manusha.
+                Designed & Developed by Manusha Wijerathna.
               </p>
               <a
                 href="https://manushaw.vercel.app"
@@ -341,7 +341,7 @@ export default function LandingPage() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors group"
               >
-                <span>manushaw.vercel.app</span>
+                <span>Manusha Wijerathna</span>
                 <svg className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>

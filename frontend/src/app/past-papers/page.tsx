@@ -17,7 +17,6 @@ import {
   Calendar,
   Languages,
   X,
-  Sparkles,
   SlidersHorizontal,
   RotateCcw,
   ChevronDown,
@@ -148,13 +147,8 @@ export default function PublicPastPapersPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-6 pb-6 sm:pt-14 sm:pb-12 border-b border-slate-200/60 dark:border-slate-800/60 bg-gradient-to-b from-indigo-500/10 via-violet-500/5 to-transparent">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-3 sm:space-y-4">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800/60 text-indigo-600 dark:text-indigo-400 text-[11px] sm:text-xs font-semibold">
-            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0" />
-            <span>Free & Open Examination Documents</span>
-          </div>
-
           <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-slate-900 dark:text-white leading-tight">
-            Official Past Papers & Marking Schemes
+            Past Papers & Marking Schemes
           </h1>
 
           <p className="max-w-2xl mx-auto text-xs sm:text-sm md:text-base text-slate-600 dark:text-slate-400 leading-relaxed px-2">
@@ -709,15 +703,7 @@ export default function PublicPastPapersPage() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 py-6 sm:py-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-1.5 px-4">
-        <p className="font-semibold text-slate-700 dark:text-slate-300">
-          Open-LMS • Sri Lanka National Examination Archive
-        </p>
-        <p className="text-[11px] text-slate-400 dark:text-slate-500">
-          All examination papers and marking schemes are provided for non-commercial educational purposes.
-        </p>
-      </footer>
+      
     </div>
   )
 }
