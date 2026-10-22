@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import api from '@/lib/api'
 import { formatDriveThumbnail, getLessonThumbnail, extractDriveFileId } from '@/lib/drive'
@@ -662,6 +663,21 @@ export default function AdminDashboard() {
                                 </svg>
                                 <span>Content Library</span>
                             </button>
+
+                            <Link
+                                href="/admin/past-papers"
+                                className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <svg className="w-5 h-5 transition-colors group-hover:text-indigo-500 dark:group-hover:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                                    </svg>
+                                    <span>Past Papers</span>
+                                </div>
+                                <span className="text-[10px] font-extrabold uppercase bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/30 px-2 py-0.5 rounded-full">
+                                    PDFs
+                                </span>
+                            </Link>
 
                             <button
                                 onClick={() => { 
