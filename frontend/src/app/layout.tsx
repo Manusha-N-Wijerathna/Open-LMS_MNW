@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore'
 import { ThemeProvider } from '@/components/ThemeProvider'
 import { TechAnimatedBackground } from '@/components/TechAnimatedBackground'
 import { InitialLoadingScreen } from '@/components/InitialLoadingScreen'
+import { PwaManager } from '@/components/PwaManager'
 import api from '@/lib/api'
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -54,6 +55,31 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <title>ICT for Future - LMS Platform</title>
+        <meta name="description" content="Interactive Learning Management System with past papers, study resources, and exam countdowns." />
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
+
+        {/* PWA Web App Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+
+        {/* Apple iOS Meta Tags */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="ICT Future LMS" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+
+        {/* Android / Windows / Browser Theming */}
+        <meta name="application-name" content="ICT Future LMS" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#4f46e5" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#090d16" media="(prefers-color-scheme: dark)" />
+        <meta name="msapplication-TileColor" content="#4f46e5" />
+        <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+
+        {/* Favicons */}
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -75,6 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeProvider>
           <InitialLoadingScreen />
           <TechAnimatedBackground />
+          <PwaManager />
           {children}
         </ThemeProvider>
       </body>

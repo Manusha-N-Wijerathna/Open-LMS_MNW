@@ -15,6 +15,7 @@ import {
   Menu,
   ChevronRight,
   Sparkles,
+  Download,
 } from 'lucide-react'
 
 export function StudentMobileMenu() {
@@ -130,7 +131,24 @@ export function StudentMobileMenu() {
               </div>
             </button>
 
-            {/* 5. Logout Button */}
+            {/* 5. Install App Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsOpen(false)
+                window.dispatchEvent(new CustomEvent('open-pwa-install'))
+              }}
+              className="flex items-center gap-3 group animate-slideUp [animation-delay:140ms] cursor-pointer"
+            >
+              <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                Install App
+              </span>
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-indigo-500 to-violet-600 text-white border-2 border-indigo-400/40 shadow-lg flex items-center justify-center transition-transform active:scale-95">
+                <Download className="w-5 h-5" />
+              </div>
+            </button>
+
+            {/* 6. Logout Button */}
             <button
               type="button"
               onClick={handleSignOut}

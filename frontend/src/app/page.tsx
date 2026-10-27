@@ -20,6 +20,7 @@ import {
   FileText
 } from 'lucide-react'
 import { ExamCountdownSection } from '@/components/ExamCountdownSection'
+import { InstallButton } from '@/components/InstallButton'
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -59,9 +60,9 @@ export default function LandingPage() {
             </a>
           </nav>
 
-          {/* Right Action Area (Theme Toggle + Auth Buttons) */}
+          {/* Right Action Area (Install Button + Theme Toggle + Auth Buttons) */}
           <div className="hidden md:flex items-center gap-3.5">
-            {/* Top-Right Theme Toggle Button */}
+            <InstallButton variant="solid" />
             <ThemeToggle />
           </div>
 
@@ -81,6 +82,9 @@ export default function LandingPage() {
         {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-slate-200/80 dark:border-white/5 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl px-5 py-6 flex flex-col gap-4 animate-in slide-in-from-top-4 duration-200 shadow-2xl">
+            <div className="pb-1">
+              <InstallButton className="w-full justify-center py-2.5 text-sm" variant="solid" />
+            </div>
             <a
               href="#exam-countdown"
               onClick={() => setMobileMenuOpen(false)}
