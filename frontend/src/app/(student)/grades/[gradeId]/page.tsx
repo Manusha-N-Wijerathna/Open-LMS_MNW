@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import api from '@/lib/api'
-import { useAuthStore } from '@/store/authStore'
+import { useAuthStore, getAssignedGradeIds } from '@/store/authStore'
 import Link from 'next/link'
 import { getLessonThumbnail, extractDriveFileId } from '@/lib/drive'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -47,6 +47,7 @@ export default function GradePage() {
   const [lessons, setLessons] = useState<Lesson[]>([])
   const [loadingLessons, setLoadingLessons] = useState(false)
   const [brokenImages, setBrokenImages] = useState<Record<number, boolean>>({})
+  const [accessDenied, setAccessDenied] = useState(false)
 
   useEffect(() => {
     if (loading) return
@@ -55,12 +56,25 @@ export default function GradePage() {
       return
     }
 
+    if (profile && profile.role !== 'admin') {
+      const assignedIds = getAssignedGradeIds(profile)
+      const currentGradeNum = parseInt(gradeId, 10)
+      if (!assignedIds.includes(currentGradeNum)) {
+        setAccessDenied(true)
+        return
+      }
+    }
+
     // Fetch units and grades
     api.get(`/content/grades/${gradeId}/units`).then(res => {
       setUnits(res.data)
       if (res.data.length > 0) selectUnit(res.data[0])
     }).catch(err => {
-      console.error("Error fetching units:", err)
+      if (err?.response?.status === 403) {
+        setAccessDenied(true)
+      } else {
+        console.error("Error fetching units:", err)
+      }
       setUnits([])
     })
 
@@ -85,7 +99,39 @@ export default function GradePage() {
   }
 
   if (loading) {
+    if (accessDenied) {
     return (
+      <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 flex items-center justify-center p-6">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/10 rounded-3xl p-8 text-center shadow-xl backdrop-blur-xl space-y-4">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mx-auto border border-red-500/20">
+            <Lock className="w-8 h-8" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Access Restricted</h2>
+          <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed">
+            You do not have permission to access this grade curriculum. You can only view the grade assigned to your account by your instructor.
+          </p>
+          <div className="pt-2 flex flex-col sm:flex-row gap-2.5 justify-center">
+            {profile && getAssignedGradeIds(profile).length > 0 ? (
+              <Link
+                href={`/grades/${getAssignedGradeIds(profile)[0]}`}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition"
+              >
+                Go to Your Assigned Grade
+              </Link>
+            ) : null}
+            <Link
+              href="/dashboard"
+              className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs px-4 py-2.5 rounded-xl transition"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
       <div className="min-h-screen flex items-center justify-center bg-transparent">
         <div className="relative z-10 flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 dark:border-indigo-400 border-t-transparent"></div>

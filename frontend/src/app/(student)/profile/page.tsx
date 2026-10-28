@@ -53,6 +53,7 @@ export default function ProfilePage() {
   // Avatar states
   const [avatarError, setAvatarError] = useState<string | null>(null)
   const [avatarSuccess, setAvatarSuccess] = useState<string | null>(null)
+  const [assignedGrades, setAssignedGrades] = useState<{ id: number; name: string }[]>([])
   const [copiedId, setCopiedId] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
@@ -69,6 +70,18 @@ export default function ProfilePage() {
       setFullName(user.email.split('@')[0])
     }
   }, [profile, user])
+
+  useEffect(() => {
+    if (user && profile?.role !== 'admin') {
+      api.get('/content/grades')
+        .then(res => {
+          if (Array.isArray(res.data)) {
+            setAssignedGrades(res.data)
+          }
+        })
+        .catch(() => {})
+    }
+  }, [user, profile?.role, profile?.grade_id, profile?.grade_ids])
 
   // Process & compress uploaded image client-side to keep localStorage small (~30-50KB)
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -384,6 +397,23 @@ export default function ProfilePage() {
                     <span>Pending Approval</span>
                   </span>
                 )}
+
+                {/* Assigned Grade Badge */}
+                {profile?.role !== 'admin' && (
+                  assignedGrades.length > 0 ? (
+                    assignedGrades.map(g => (
+                      <span key={g.id} className="inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-bold px-3 py-1 rounded-full">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        <span>{g.name}</span>
+                      </span>
+                    ))
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 bg-slate-500/10 border border-slate-500/20 text-slate-600 dark:text-slate-400 text-xs font-bold px-3 py-1 rounded-full">
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>No Grades Assigned</span>
+                    </span>
+                  )
+                )}
               </div>
 
               <div>
@@ -665,6 +695,28 @@ export default function ProfilePage() {
                   )}
                 </div>
               </div>
+
+                                          {/* Assigned Grades */}
+              {profile?.role !== 'admin' && (
+                <div className="space-y-1">
+                  <span className="text-xs text-slate-400 font-medium">Assigned Class / Grade(s)</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {assignedGrades.length > 0 ? (
+                      assignedGrades.map(g => (
+                        <span key={g.id} className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg text-xs font-bold">
+                          <GraduationCap className="w-3.5 h-3.5" />
+                          {g.name}
+                        </span>
+                      ))
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400">
+                        <GraduationCap className="w-4 h-4" />
+                        Not Assigned Yet
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* Unique ID */}
               <div className="space-y-1">

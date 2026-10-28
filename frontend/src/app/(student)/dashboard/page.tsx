@@ -17,7 +17,8 @@ import {
   Award,
   Layers,
   Clock,
-  User
+  User,
+  AlertCircle
 } from 'lucide-react'
 
 interface Grade {
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const { user, profile, loading, signOut } = useAuthStore()
   const [grades, setGrades] = useState<Grade[]>([])
   const [greeting, setGreeting] = useState('Welcome back')
+  const [fetchingGrades, setFetchingGrades] = useState(true)
 
   useEffect(() => {
     const hour = new Date().getHours()
@@ -45,11 +47,15 @@ export default function Dashboard() {
       router.push('/login')
       return
     }
+    setFetchingGrades(true)
     api.get('/content/grades')
       .then(res => setGrades(res.data))
       .catch(err => {
         console.error("Error fetching grades:", err)
         setGrades([])
+      })
+      .finally(() => {
+        setFetchingGrades(false)
       })
   }, [user, loading, router])
 
@@ -66,6 +72,8 @@ export default function Dashboard() {
     Award,
     Layers
   ]
+
+  const isAdmin = profile?.role === 'admin'
 
   if (loading) {
     return (
@@ -170,12 +178,23 @@ export default function Dashboard() {
               <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 text-xs font-bold tracking-wider uppercase">
                 <Sparkles className="w-4 h-4" />
                 <span>Student Learning Space</span>
+                {isAdmin && (
+                  <span className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider font-extrabold ml-2">
+                    Admin Preview
+                  </span>
+                )}
               </div>
               <h2 className="text-2xl sm:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
                 {greeting}, {profile?.full_name || 'Student'}! 👋
               </h2>
               <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base max-w-xl leading-relaxed">
-                Welcome back. Select your grade curriculum below to access course units, video archives, and study resources.
+                {isAdmin
+                  ? 'Viewing all published curriculum grades with administrative privileges.'
+                  : grades.length === 1
+                    ? `Welcome back. Select your assigned curriculum (${grades[0].name}) to access study units, video lessons, and revision materials.`
+                    : grades.length > 1
+                      ? `Welcome back. Select from your ${grades.length} assigned grade curriculums below to view study units and lessons.`
+                      : 'Welcome to your student workspace. Please wait for an administrator to assign your curriculum grade(s).'}
               </p>
               <div className="flex items-center gap-3 pt-1">
                 <Link
@@ -185,6 +204,14 @@ export default function Dashboard() {
                   <User className="w-3.5 h-3.5 text-indigo-500" />
                   <span>Manage Profile</span>
                 </Link>
+                {isAdmin && (
+                  <Link
+                    href="/admin/dashboard"
+                    className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-600 dark:text-purple-400 hover:text-purple-700 bg-purple-500/10 border border-purple-500/20 px-3.5 py-1.5 rounded-xl transition"
+                  >
+                    <span>Admin Dashboard</span>
+                  </Link>
+                )}
               </div>
             </div>
             
@@ -194,8 +221,18 @@ export default function Dashboard() {
                 <BookOpen className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-2xl font-black text-slate-900 dark:text-white">{grades.length}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Available Grades</p>
+                <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  {isAdmin
+                    ? `${grades.length} Grades`
+                    : grades.length === 1
+                      ? grades[0].name
+                      : grades.length > 1
+                        ? `${grades.length} Grades`
+                        : 'Not Assigned'}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  {isAdmin ? 'Available Grades' : grades.length > 1 ? 'Enrolled Classes' : 'Assigned Grade'}
+                </p>
               </div>
             </div>
           </div>
@@ -219,24 +256,47 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-                Curriculum Grades
+                {isAdmin ? 'Curriculum Grades' : 'Your Assigned Curriculum'}
               </h3>
               <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm">
-                Select your class level to view structured study units
+                {isAdmin
+                  ? 'All class levels available in the system'
+                  : 'Access your enrolled grade curriculum units and lesson archives'}
               </p>
             </div>
           </div>
 
-          {grades.length === 0 ? (
-            <div className="text-center py-20 bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 rounded-3xl">
-              <div className="w-16 h-16 bg-slate-100 dark:bg-slate-900 flex items-center justify-center mx-auto mb-4 text-slate-400 rounded-2xl">
-                <GraduationCap className="w-8 h-8" />
+          {fetchingGrades ? (
+            <div className="text-center py-16 bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 rounded-3xl">
+              <div className="animate-spin rounded-full h-8 w-8 border-3 border-indigo-600 dark:border-indigo-400 border-t-transparent mx-auto mb-3"></div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Loading your assigned curriculum...</p>
+            </div>
+          ) : grades.length === 0 ? (
+            <div className="text-center py-16 px-6 bg-white dark:bg-slate-900/30 border border-slate-200 dark:border-white/5 rounded-3xl max-w-2xl mx-auto shadow-sm">
+              <div className="w-16 h-16 bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 rounded-2xl border border-amber-500/20">
+                <AlertCircle className="w-8 h-8" />
               </div>
-              <h4 className="text-slate-700 dark:text-slate-300 font-bold mb-1">No Grades Available</h4>
-              <p className="text-slate-500 text-xs sm:text-sm">Curriculum grades will appear here once published by the instructor.</p>
+              <h4 className="text-slate-800 dark:text-slate-200 font-bold text-lg mb-2">
+                {isAdmin ? 'No Grades Created Yet' : 'No Grades Assigned Yet'}
+              </h4>
+              <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed max-w-md mx-auto">
+                {isAdmin
+                  ? 'You can create curriculum grades from the Admin Dashboard Studio.'
+                  : 'Your student account is active, but an administrator has not assigned you to any class grades yet. Please contact your instructor or wait until your grade is assigned.'}
+              </p>
+              {isAdmin && (
+                <div className="mt-5">
+                  <Link
+                    href="/admin/dashboard"
+                    className="inline-flex items-center gap-2 bg-indigo-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:bg-indigo-700 transition"
+                  >
+                    Go to Admin Dashboard
+                  </Link>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className={`grid grid-cols-1 ${grades.length === 1 ? 'max-w-md' : 'md:grid-cols-2 lg:grid-cols-3'} gap-6`}>
               {grades.map((grade, i) => {
                 const IconComponent = gradeIcons[i % gradeIcons.length]
                 return (
@@ -253,7 +313,7 @@ export default function Dashboard() {
                           <IconComponent className="w-6 h-6" />
                         </div>
                         <span className="text-[11px] bg-white/15 backdrop-blur-md px-3 py-1 rounded-full text-white font-semibold border border-white/15">
-                          Curriculum
+                          {isAdmin ? 'Curriculum' : 'Enrolled Class'}
                         </span>
                       </div>
 

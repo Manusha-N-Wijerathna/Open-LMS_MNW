@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDbClient } from '@/lib/supabase/server'
-import { jsonError } from '@/lib/auth/authorization'
+import { getCurrentUser, getAssignedGradeIds, jsonError } from '@/lib/auth/authorization'
 
 export async function GET(
   request: NextRequest,
@@ -13,6 +13,16 @@ export async function GET(
 
     if (isNaN(parsedGradeId)) {
       return jsonError('Invalid grade ID', 400)
+    }
+
+    const auth = await getCurrentUser(request)
+
+    // Security check: if not admin, ensure the student is assigned to this specific grade
+    if (auth?.profile && auth.profile.role !== 'admin') {
+      const assignedGradeIds = getAssignedGradeIds(auth.profile)
+      if (!assignedGradeIds.includes(parsedGradeId)) {
+        return jsonError('Access restricted: You are not assigned to this grade curriculum', 403)
+      }
     }
 
     const db = await getDbClient(request)

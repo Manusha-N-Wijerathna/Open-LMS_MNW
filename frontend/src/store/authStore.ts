@@ -7,9 +7,22 @@ export interface Profile {
     full_name: string | null
     role: string
     is_verified: boolean
+    grade_id?: number | null
+    grade_ids?: number[] | null
     created_at: string
     avatar_url?: string | null
     email?: string
+}
+
+export function getAssignedGradeIds(profile?: { grade_ids?: number[] | null; grade_id?: number | null } | null): number[] {
+    if (!profile) return []
+    if (Array.isArray(profile.grade_ids) && profile.grade_ids.length > 0) {
+        return profile.grade_ids.filter((id): id is number => typeof id === 'number')
+    }
+    if (typeof profile.grade_id === 'number') {
+        return [profile.grade_id]
+    }
+    return []
 }
 
 interface AuthState {
