@@ -14,6 +14,8 @@ interface Profile {
     full_name: string | null
     role: string
     is_verified: boolean
+    grade_id?: number | null
+    grade_ids?: number[] | null
     created_at: string
 }
 interface Grade {
@@ -68,6 +70,12 @@ export default function AdminDashboard() {
     // Filtering & Searching
     const [userSearchQuery, setUserSearchQuery] = useState('')
     const [userFilter, setUserFilter] = useState<'all' | 'pending' | 'verified'>('all')
+    const [gradeFilter, setGradeFilter] = useState<'all' | 'unassigned' | number>('all')
+    const [updatingGradeForUser, setUpdatingGradeForUser] = useState<string | null>(null)
+    const [showAssignGradesModal, setShowAssignGradesModal] = useState(false)
+    const [selectedStudentForGrades, setSelectedStudentForGrades] = useState<Profile | null>(null)
+    const [selectedGradeIdsForModal, setSelectedGradeIdsForModal] = useState<number[]>([])
+    const [savingStudentGrades, setSavingStudentGrades] = useState(false)
 
     // Toast Notifications
     const [toasts, setToasts] = useState<Toast[]>([])
@@ -292,6 +300,71 @@ export default function AdminDashboard() {
                 setConfirmDialog(prev => ({ ...prev, show: false }))
             }
         })
+    }
+
+        const openAssignGradesModal = (student: Profile) => {
+        setSelectedStudentForGrades(student)
+        const currentIds = Array.isArray(student.grade_ids) && student.grade_ids.length > 0
+            ? [...student.grade_ids]
+            : student.grade_id ? [student.grade_id] : []
+        setSelectedGradeIdsForModal(currentIds)
+        setShowAssignGradesModal(true)
+    }
+
+    const handleSaveStudentGrades = async () => {
+        if (!selectedStudentForGrades) return
+        setSavingStudentGrades(true)
+        try {
+            await api.patch(`/admin/users/${selectedStudentForGrades.id}/grade`, {
+                grade_ids: selectedGradeIdsForModal
+            })
+            const updatedIds = selectedGradeIdsForModal
+            setUsers(prev => prev.map(u => u.id === selectedStudentForGrades.id
+                ? { ...u, grade_ids: updatedIds, grade_id: updatedIds[0] || null }
+                : u
+            ))
+            const gradeNames = grades
+                .filter(g => updatedIds.includes(g.id))
+                .map(g => g.name)
+                .join(', ')
+
+            showToast(
+                updatedIds.length > 0
+                    ? `Assigned (${gradeNames}) to ${selectedStudentForGrades.full_name || 'Student'}`
+                    : `Cleared grade assignments for ${selectedStudentForGrades.full_name || 'Student'}`,
+                'success'
+            )
+            setShowAssignGradesModal(false)
+            setSelectedStudentForGrades(null)
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { detail?: string; error?: string } } }
+            const msg = axiosErr?.response?.data?.detail || axiosErr?.response?.data?.error || 'Failed to update student grades'
+            showToast(msg, 'error')
+        } finally {
+            setSavingStudentGrades(false)
+        }
+    }
+
+    const handleAssignGrade = async (userId: string, studentName: string, gradeId: number | null) => {
+        setUpdatingGradeForUser(userId)
+        try {
+            await api.patch(`/admin/users/${userId}/grade`, { grade_id: gradeId })
+            const assignedGradeObj = grades.find(g => g.id === gradeId)
+            const gradeLabel = assignedGradeObj ? assignedGradeObj.name : 'Unassigned'
+            showToast(
+                gradeId
+                    ? `Assigned ${gradeLabel} to ${studentName || 'Student'}`
+                    : `Removed grade assignment for ${studentName || 'Student'}`,
+                'success'
+            )
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, grade_id: gradeId } : u))
+        } catch (err: unknown) {
+            const axiosErr = err as { response?: { data?: { detail?: string; error?: string } } }
+            const msg = axiosErr?.response?.data?.detail || axiosErr?.response?.data?.error || 'Failed to update student grade'
+            showToast(msg, 'error')
+        } finally {
+            setUpdatingGradeForUser(null)
+        }
     }
 
     // Grade Operations
@@ -549,6 +622,22 @@ export default function AdminDashboard() {
         let result = users.filter(u => u.role !== 'admin')
         if (userFilter === 'pending') result = pendingUsers
         if (userFilter === 'verified') result = verifiedUsers
+
+        if (gradeFilter === 'unassigned') {
+            result = result.filter(u => {
+                const ids = Array.isArray(u.grade_ids) && u.grade_ids.length > 0
+                    ? u.grade_ids
+                    : u.grade_id ? [u.grade_id] : []
+                return ids.length === 0
+            })
+        } else if (typeof gradeFilter === 'number') {
+            result = result.filter(u => {
+                const ids = Array.isArray(u.grade_ids) && u.grade_ids.length > 0
+                    ? u.grade_ids
+                    : u.grade_id ? [u.grade_id] : []
+                return ids.includes(gradeFilter)
+            })
+        }
 
         if (userSearchQuery.trim()) {
             const query = userSearchQuery.toLowerCase()
@@ -887,6 +976,25 @@ export default function AdminDashboard() {
                                         </button>
                                     ))}
                                 </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 hidden sm:inline">Grade:</span>
+                                    <select
+                                        value={gradeFilter === 'all' ? 'all' : gradeFilter === 'unassigned' ? 'unassigned' : String(gradeFilter)}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            if (val === 'all') setGradeFilter('all')
+                                            else if (val === 'unassigned') setGradeFilter('unassigned')
+                                            else setGradeFilter(parseInt(val, 10))
+                                        }}
+                                        className="bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 cursor-pointer"
+                                    >
+                                        <option value="all">All Grades</option>
+                                        <option value="unassigned">Unassigned Only</option>
+                                        {grades.map(g => (
+                                            <option key={g.id} value={g.id}>{g.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
 
                             {/* Pending Verifications Section */}
@@ -980,6 +1088,38 @@ export default function AdminDashboard() {
                                                         </div>
                                                     </div>
 
+                                                    
+                                                    <div className="flex items-center justify-between text-xs py-2 border-t border-slate-200/60 dark:border-white/[0.04]">
+                                                        <span className="text-slate-500 font-medium text-[11px]">Assigned Grades:</span>
+                                                        {(() => {
+                                                            const studentGradeIds = Array.isArray(u.grade_ids) && u.grade_ids.length > 0
+                                                                ? u.grade_ids
+                                                                : u.grade_id ? [u.grade_id] : []
+                                                            const assignedObjs = grades.filter(g => studentGradeIds.includes(g.id))
+                                                            return (
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <div className="flex flex-wrap items-center gap-1 justify-end max-w-[160px]">
+                                                                        {assignedObjs.length > 0 ? (
+                                                                            assignedObjs.map(g => (
+                                                                                <span key={g.id} className="bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                                                                                    {g.name}
+                                                                                </span>
+                                                                            ))
+                                                                        ) : (
+                                                                            <span className="text-slate-400 italic text-[11px]">None</span>
+                                                                        )}
+                                                                    </div>
+                                                                    <button
+                                                                        onClick={() => openAssignGradesModal(u)}
+                                                                        className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 px-2 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/20 cursor-pointer"
+                                                                    >
+                                                                        Manage
+                                                                    </button>
+                                                                </div>
+                                                            )
+                                                        })()}
+                                                    </div>
+
                                                     <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-200/60 dark:border-white/[0.04]">
                                                         <span>Joined: {new Date(u.created_at).toLocaleDateString()}</span>
                                                         <div className="flex items-center gap-2">
@@ -1023,6 +1163,7 @@ export default function AdminDashboard() {
                                                     <tr className="border-b border-slate-200/80 dark:border-white/5 bg-slate-50/70 dark:bg-white/[0.01]">
                                                         <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Student Information</th>
                                                         <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Status</th>
+                                                        <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Assigned Grade</th>
                                                         <th className="px-6 py-4 text-xs font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Enrollment Date</th>
                                                         <th className="px-6 py-4 text-right"></th>
                                                     </tr>
@@ -1057,6 +1198,43 @@ export default function AdminDashboard() {
                                                                         Pending
                                                                     </span>
                                                                 )}
+                                                            </td>
+
+                                                            <td className="px-6 py-4">
+                                                                {(() => {
+                                                                    const studentGradeIds = Array.isArray(u.grade_ids) && u.grade_ids.length > 0
+                                                                        ? u.grade_ids
+                                                                        : u.grade_id ? [u.grade_id] : []
+                                                                    const assignedObjs = grades.filter(g => studentGradeIds.includes(g.id))
+                                                                    
+                                                                    return (
+                                                                        <div className="flex items-center gap-2">
+                                                                            <div className="flex flex-wrap items-center gap-1.5 max-w-[220px]">
+                                                                                {assignedObjs.length > 0 ? (
+                                                                                    assignedObjs.map(g => (
+                                                                                        <span
+                                                                                            key={g.id}
+                                                                                            className="inline-flex items-center gap-1 bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 px-2 py-0.5 rounded-lg text-[11px] font-bold"
+                                                                                        >
+                                                                                            {g.name}
+                                                                                        </span>
+                                                                                    ))
+                                                                                ) : (
+                                                                                    <span className="text-xs text-slate-400 italic">No grades</span>
+                                                                                )}
+                                                                            </div>
+                                                                            <button
+                                                                                onClick={() => openAssignGradesModal(u)}
+                                                                                className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border border-slate-200 dark:border-white/10 transition cursor-pointer shrink-0"
+                                                                                title="Assign Multiple Grades"
+                                                                            >
+                                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                                                                </svg>
+                                                                            </button>
+                                                                        </div>
+                                                                    )
+                                                                })()}
                                                             </td>
                                                             <td className="px-6 py-4 text-slate-400 font-mono text-xs">
                                                                 {new Date(u.created_at).toLocaleDateString(undefined, {
@@ -1645,6 +1823,154 @@ export default function AdminDashboard() {
                     )}
                 </main>
             </div>
+
+            
+            {/* ── ASSIGN GRADES MODAL ── */}
+            {showAssignGradesModal && selectedStudentForGrades && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-md p-4 animate-fade-in">
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden relative">
+                        {/* Modal Header */}
+                        <div className="px-6 py-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-black text-sm border border-indigo-500/25">
+                                    {selectedStudentForGrades.full_name?.charAt(0).toUpperCase() || 'S'}
+                                </div>
+                                <div>
+                                    <h3 className="font-extrabold text-slate-900 dark:text-white text-base">
+                                        Assign Multiple Grades
+                                    </h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        For: <span className="font-bold text-slate-700 dark:text-slate-300">{selectedStudentForGrades.full_name || 'Student'}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setShowAssignGradesModal(false)
+                                    setSelectedStudentForGrades(null)
+                                }}
+                                className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 cursor-pointer"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-slate-500 dark:text-slate-400 font-medium">
+                                    Select all grades this student can access:
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedGradeIdsForModal(grades.map(g => g.id))}
+                                        className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                                    >
+                                        Select All
+                                    </button>
+                                    <span className="text-slate-300 dark:text-slate-700">|</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedGradeIdsForModal([])}
+                                        className="text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:underline cursor-pointer"
+                                    >
+                                        Clear All
+                                    </button>
+                                </div>
+                            </div>
+
+                            {grades.length === 0 ? (
+                                <div className="py-8 text-center text-slate-500 text-xs italic">
+                                    No curriculum grades exist yet.
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
+                                    {grades.map(grade => {
+                                        const isSelected = selectedGradeIdsForModal.includes(grade.id)
+                                        return (
+                                            <div
+                                                key={grade.id}
+                                                onClick={() => {
+                                                    setSelectedGradeIdsForModal(prev =>
+                                                        isSelected
+                                                            ? prev.filter(id => id !== grade.id)
+                                                            : [...prev, grade.id]
+                                                    )
+                                                }}
+                                                className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                                                    isSelected
+                                                        ? 'bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-500 text-indigo-900 dark:text-white shadow-xs'
+                                                        : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/15 text-slate-700 dark:text-slate-300'
+                                                }`}
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-all ${
+                                                        isSelected
+                                                            ? 'bg-indigo-600 border-indigo-600 text-white'
+                                                            : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                                                    }`}>
+                                                        {isSelected && (
+                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                                            </svg>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-extrabold text-sm">{grade.name}</p>
+                                                        <p className="text-[10px] text-slate-400 font-mono">Order #{grade.display_order}</p>
+                                                    </div>
+                                                </div>
+                                                {isSelected && (
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full">
+                                                        Selected
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                            )}
+
+                            <div className="pt-2 text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                                <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                                <span>{selectedGradeIdsForModal.length} grade(s) assigned</span>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 border-t border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.01] flex justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowAssignGradesModal(false)
+                                    setSelectedStudentForGrades(null)
+                                }}
+                                className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition cursor-pointer"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                disabled={savingStudentGrades}
+                                onClick={handleSaveStudentGrades}
+                                className="px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20 transition cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                            >
+                                {savingStudentGrades ? (
+                                    <>
+                                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        <span>Saving...</span>
+                                    </>
+                                ) : (
+                                    <span>Save Grade Assignments</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── ADD GRADE MODAL ── */}
             {showAddGrade && (

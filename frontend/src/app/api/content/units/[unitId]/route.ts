@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getDbClient } from '@/lib/supabase/server'
-import { jsonError } from '@/lib/auth/authorization'
+import { getCurrentUser, getAssignedGradeIds, jsonError } from '@/lib/auth/authorization'
 
 export async function GET(
   request: NextRequest,
@@ -30,6 +30,15 @@ export async function GET(
 
     if (!unit) {
       return jsonError('Unit not found', 404)
+    }
+
+    // Security check: if student, verify that the unit belongs to their assigned grades
+    const auth = await getCurrentUser(request)
+    if (auth?.profile && auth.profile.role !== 'admin') {
+      const assignedGradeIds = getAssignedGradeIds(auth.profile)
+      if (!assignedGradeIds.includes(unit.grade_id)) {
+        return jsonError('Access restricted: You do not have access to this unit', 403)
+      }
     }
 
     return NextResponse.json(unit)
