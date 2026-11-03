@@ -1,5 +1,5 @@
 // ICT for Future LMS - Progressive Web App Service Worker
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.0.1';
 const CACHE_NAME = `ict-future-lms-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
