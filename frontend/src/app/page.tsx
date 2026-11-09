@@ -52,6 +52,9 @@ export default function LandingPage() {
               <span>Past Papers</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Free</span>
             </Link>
+            <Link href="/exam-results" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
+              Exam Results
+            </Link>
             <a href="#exam-countdown" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
               Exam Countdown
             </a>
@@ -85,6 +88,21 @@ export default function LandingPage() {
             <div className="pb-1">
               <InstallButton className="w-full justify-center py-2.5 text-sm" variant="solid" />
             </div>
+            <Link
+              href="/past-papers"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-slate-700 dark:text-slate-300 font-medium py-1 flex items-center justify-between"
+            >
+              <span>Past Papers</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Free</span>
+            </Link>
+            <Link
+              href="/exam-results"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-slate-700 dark:text-slate-300 font-medium py-1"
+            >
+              Exam Results
+            </Link>
             <a
               href="#exam-countdown"
               onClick={() => setMobileMenuOpen(false)}

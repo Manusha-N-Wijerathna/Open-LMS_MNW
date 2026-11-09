@@ -34,7 +34,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const updateData: { name?: string; display_order?: number } = {}
+    const updateData: { name?: string; display_order?: number; slug?: string } = {}
 
     if (body.name !== undefined) {
       const name = typeof body.name === 'string' ? body.name.trim() : ''
@@ -42,6 +42,10 @@ export async function PUT(
         return jsonError('Grade name cannot be empty', 400)
       }
       updateData.name = name
+      updateData.slug = (body.slug || name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
     }
 
     if (body.display_order !== undefined) {
@@ -100,6 +104,8 @@ export async function DELETE(
       return jsonError('Grade not found', 404)
     }
 
+    const force = request.nextUrl.searchParams.get('force') === 'true' || request.nextUrl.searchParams.get('cascade') === 'true'
+
     // Check for child units
     const { count, error: countError } = await db
       .from('units')
@@ -112,7 +118,24 @@ export async function DELETE(
     }
 
     if (count !== null && count > 0) {
-      return jsonError('Cannot delete grade with existing units. Remove units first.', 400)
+      if (!force) {
+        return jsonError(`Cannot delete grade with ${count} existing course unit(s). Please remove units first or confirm force delete.`, 400)
+      }
+
+      // If force, clean up child units and lessons
+      const { data: unitsList } = await db.from('units').select('id').eq('grade_id', gradeId)
+      if (unitsList && unitsList.length > 0) {
+        const unitIds = unitsList.map((u: { id: number }) => u.id)
+        await db.from('lessons').delete().in('unit_id', unitIds)
+        await db.from('units').delete().eq('grade_id', gradeId)
+      }
+    }
+
+    // Clean up any child exam_results for this grade
+    try {
+      await db.from('exam_results').delete().eq('grade_id', gradeId)
+    } catch {
+      // Table may not exist yet
     }
 
     const { error: deleteError } = await db
