@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Sparkles,
   Download,
+  Award,
 } from 'lucide-react'
 
 export function StudentMobileMenu() {
@@ -114,6 +115,24 @@ export function StudentMobileMenu() {
                   : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-white/10'
               }`}>
                 <GraduationCap className="w-5 h-5" />
+              </div>
+            </Link>
+
+            {/* 3.5. Exam Results Button */}
+            <Link
+              href="/exam-results"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 group animate-slideUp [animation-delay:100ms]"
+            >
+              <span className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-bold px-3 py-1.5 rounded-full shadow-lg">
+                Exam Results
+              </span>
+              <div className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-transform active:scale-95 border-2 ${
+                pathname.startsWith('/exam-results')
+                  ? 'bg-indigo-600 text-white border-indigo-400 ring-2 ring-indigo-500/40'
+                  : 'bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border-slate-200 dark:border-white/10'
+              }`}>
+                <Award className="w-5 h-5" />
               </div>
             </Link>
 

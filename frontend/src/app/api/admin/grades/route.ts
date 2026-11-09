@@ -20,9 +20,15 @@ export async function POST(request: NextRequest) {
 
     const db = await getDbClient(request)
 
-    const insertPayload = {
+    const derivedSlug = (body.slug || name.trim())
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+
+    const insertPayload: Record<string, unknown> = {
       name: name.trim(),
       display_order: parsedOrder,
+      slug: derivedSlug,
     }
 
     const { data: grade, error } = await db
