@@ -91,7 +91,7 @@ export async function GET(
         .from('exam_results')
         .select('*')
         .eq('grade_id', grade.id)
-        .order('created_at', { ascending: false })
+        .order('marks', { ascending: false, nullsFirst: false })
 
       if (error) {
         console.warn('Error querying exam_results relation:', error.message)
@@ -111,6 +111,16 @@ export async function GET(
             remarks: (item.remarks as string) || null,
             created_at: (item.created_at as string) || new Date().toISOString(),
           }
+        })
+
+        // Sort descending considering marks (highest marks first; null/absent at the bottom)
+        rawResults.sort((a, b) => {
+          const marksA = a.marks !== null && a.marks !== undefined ? Number(a.marks) : -1
+          const marksB = b.marks !== null && b.marks !== undefined ? Number(b.marks) : -1
+          if (marksB !== marksA) {
+            return marksB - marksA
+          }
+          return (a.student_name || '').localeCompare(b.student_name || '')
         })
       }
     } catch (queryErr) {

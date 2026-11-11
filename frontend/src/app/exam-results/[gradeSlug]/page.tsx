@@ -88,10 +88,10 @@ export default function GradeResultsPage({
     return Array.from(terms)
   }, [data])
 
-  // Filtered results based on selected term and search query (subject, student name, institute)
+  // Filtered and sorted results: filtered by term/search, sorted in descending order considering marks
   const filteredResults = useMemo(() => {
     if (!data?.results) return []
-    return data.results.filter(r => {
+    const filtered = data.results.filter(r => {
       const term = r.term || r.exams?.term || 'Evaluation'
       const termMatch = selectedTerm === 'all' || (term === selectedTerm)
       const q = searchSubject.trim().toLowerCase()
@@ -104,6 +104,18 @@ export default function GradeResultsPage({
         institute.toLowerCase().includes(q) ||
         r.grade_letter.toLowerCase().includes(q)
       return termMatch && searchMatch
+    })
+
+    // Sort strictly in descending order considering marks (highest marks first; null/absent at the bottom)
+    return [...filtered].sort((a, b) => {
+      const marksA = a.marks !== null && a.marks !== undefined ? Number(a.marks) : -1
+      const marksB = b.marks !== null && b.marks !== undefined ? Number(b.marks) : -1
+      if (marksB !== marksA) {
+        return marksB - marksA
+      }
+      const nameA = a.student_name || a.student?.full_name || a.profiles?.full_name || ''
+      const nameB = b.student_name || b.student?.full_name || b.profiles?.full_name || ''
+      return nameA.localeCompare(nameB)
     })
   }, [data, selectedTerm, searchSubject])
 
@@ -425,7 +437,13 @@ export default function GradeResultsPage({
                   })}
                 </div>
 
-                {/* Subject Search Input */}
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/60 shrink-0">
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>Ranked by Marks (High → Low)</span>
+                  </span>
+
+                  {/* Subject Search Input */}
                 <div className="relative max-w-xs w-full">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                   <input
@@ -435,6 +453,7 @@ export default function GradeResultsPage({
                     placeholder="Search subject..."
                     className="w-full pl-9 pr-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 text-xs text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 shadow-sm"
                   />
+                </div>
                 </div>
               </div>
             )}
@@ -448,6 +467,7 @@ export default function GradeResultsPage({
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-slate-200 dark:border-white/10 bg-slate-50/80 dark:bg-slate-800/40 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th className="py-4 px-4 text-center w-14">Rank</th>
                         <th className="py-4 px-6">Candidate / Student</th>
                         <th className="py-4 px-6">Institute / School</th>
                         <th className="py-4 px-6">Subject & Term</th>
@@ -458,7 +478,7 @@ export default function GradeResultsPage({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-white/5 text-xs sm:text-sm">
-                      {filteredResults.map((result) => {
+                      {filteredResults.map((result, idx) => {
                         const marksNum = result.marks !== null && result.marks !== undefined ? Number(result.marks) : null
                         const examTitle = result.exams?.title || 'Term Evaluation'
                         const examTerm = result.term || result.exams?.term || 'Current Term'
@@ -471,6 +491,31 @@ export default function GradeResultsPage({
                             key={result.id}
                             className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors"
                           >
+                            {/* Rank Column */}
+                            <td className="py-4 px-4 text-center">
+                              {marksNum !== null && marksNum > 0 ? (
+                                idx === 0 ? (
+                                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-400 font-black text-xs border border-amber-500/30 shadow-xs" title="1st Place">
+                                    🥇 1
+                                  </span>
+                                ) : idx === 1 ? (
+                                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-slate-400/15 text-slate-600 dark:text-slate-300 font-black text-xs border border-slate-400/30 shadow-xs" title="2nd Place">
+                                    🥈 2
+                                  </span>
+                                ) : idx === 2 ? (
+                                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-amber-700/15 text-amber-700 dark:text-amber-500 font-black text-xs border border-amber-700/30 shadow-xs" title="3rd Place">
+                                    🥉 3
+                                  </span>
+                                ) : (
+                                  <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                                    #{idx + 1}
+                                  </span>
+                                )
+                              ) : (
+                                <span className="text-xs font-mono text-slate-400 dark:text-slate-600">—</span>
+                              )}
+                            </td>
+
                             {/* Candidate Name */}
                             <td className="py-4 px-6 font-bold text-slate-900 dark:text-white">
                               <div className="flex items-center gap-2.5">
@@ -561,7 +606,7 @@ export default function GradeResultsPage({
 
                 {/* Mobile Responsive Cards View */}
                 <div className="block md:hidden divide-y divide-slate-100 dark:divide-white/5">
-                  {filteredResults.map((result) => {
+                  {filteredResults.map((result, idx) => {
                     const marksNum = result.marks !== null && result.marks !== undefined ? Number(result.marks) : null
                     const examTerm = result.term || result.exams?.term || 'Evaluation'
                     const status = getStatusText(marksNum, result.grade_letter)
@@ -571,13 +616,23 @@ export default function GradeResultsPage({
                       <div key={result.id} className="p-5 space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 font-black text-xs">
+                            <div className="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0 font-black text-xs relative">
                               {studentName[0].toUpperCase()}
+                              {marksNum !== null && marksNum > 0 && idx < 3 && (
+                                <span className="absolute -top-1.5 -left-1.5 text-xs">
+                                  {idx === 0 ? '🥇' : idx === 1 ? '🥈' : '🥉'}
+                                </span>
+                              )}
                             </div>
                             <div>
-                              <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                                {studentName}
-                              </h4>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500">
+                                  #{idx + 1}
+                                </span>
+                                <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                                  {studentName}
+                                </h4>
+                              </div>
                               {result.institute && (
                                 <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                   <Building2 className="w-3 h-3 text-slate-400" />
