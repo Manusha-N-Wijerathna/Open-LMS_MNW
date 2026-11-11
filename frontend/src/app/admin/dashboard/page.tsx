@@ -8,6 +8,7 @@ import { formatDriveThumbnail, getLessonThumbnail, extractDriveFileId } from '@/
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { BannerGeneratorStudio } from '@/components/admin/BannerGeneratorStudio'
 import { ExamManagerStudio } from '@/components/admin/ExamManagerStudio'
+import { BulkLessonUploadModal } from '@/components/admin/BulkLessonUploadModal'
 
 interface Profile {
     id: string
@@ -96,6 +97,7 @@ export default function AdminDashboard() {
 
     // Lesson Modal State
     const [showLessonModal, setShowLessonModal] = useState(false)
+    const [showBulkLessonModal, setShowBulkLessonModal] = useState(false)
     const [lessonModalMode, setLessonModalMode] = useState<'create' | 'edit'>('create')
     const [editingLessonId, setEditingLessonId] = useState<number | null>(null)
     const [lessonForm, setLessonForm] = useState({
@@ -1378,6 +1380,17 @@ export default function AdminDashboard() {
                                             </button>
                                         )}
 
+                                        <button
+                                            onClick={() => setShowBulkLessonModal(true)}
+                                            className="px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95"
+                                            title="Upload lessons in bulk using a CSV file"
+                                        >
+                                            <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                            </svg>
+                                            <span>Upload CSV</span>
+                                        </button>
+
                                         {selectedUnit !== null && (
                                             <button
                                                 onClick={openCreateLessonModal}
@@ -1643,6 +1656,17 @@ export default function AdminDashboard() {
                                                             </svg>
                                                             <span>Add Lesson</span>
                                                         </button>
+
+                                                        <button
+                                                            onClick={() => setShowBulkLessonModal(true)}
+                                                            className="px-3.5 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 transition flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+                                                            title="Bulk upload lessons via CSV"
+                                                        >
+                                                            <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                            </svg>
+                                                            <span>Upload CSV</span>
+                                                        </button>
                                                     </div>
                                                 </div>
 
@@ -1670,6 +1694,15 @@ export default function AdminDashboard() {
                                                                         className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition shadow-md shadow-indigo-600/20 cursor-pointer"
                                                                     >
                                                                         + Create First Lesson
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setShowBulkLessonModal(true)}
+                                                                        className="mt-4 ml-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20 transition cursor-pointer"
+                                                                    >
+                                                                        <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                                                                        </svg>
+                                                                        <span>Upload CSV</span>
                                                                     </button>
                                                                 </>
                                                             )}
@@ -2331,6 +2364,21 @@ export default function AdminDashboard() {
                     </div>
                 </div>
             )}
+
+            {/* ── BULK LESSON UPLOAD MODAL ── */}
+            <BulkLessonUploadModal
+                isOpen={showBulkLessonModal}
+                onClose={() => setShowBulkLessonModal(false)}
+                selectedGradeId={selectedGrade}
+                gradeName={grades.find(g => g.id === selectedGrade)?.name}
+                selectedUnitId={selectedUnit}
+                units={units.filter(u => selectedGrade === null || u.grade_id === selectedGrade)}
+                onSuccess={async (_count, unitId) => {
+                    setSelectedUnit(unitId)
+                    await fetchLessons(unitId)
+                }}
+                onToast={showToast}
+            />
 
             {/* ── CUSTOM CONFIRMATION DIALOG OVERLAY ── */}
             {confirmDialog.show && (
