@@ -9,6 +9,9 @@ import { ThemeToggle } from '@/components/ThemeToggle'
 import { BannerGeneratorStudio } from '@/components/admin/BannerGeneratorStudio'
 import { ExamManagerStudio } from '@/components/admin/ExamManagerStudio'
 import { BulkLessonUploadModal } from '@/components/admin/BulkLessonUploadModal'
+import { AdminSidebar, AdminTab } from '@/components/admin/AdminSidebar'
+import { PastPapersStudio } from '@/components/admin/PastPapersStudio'
+import { ExamResultsStudio } from '@/components/admin/ExamResultsStudio'
 
 interface Profile {
     id: string
@@ -53,7 +56,7 @@ export default function AdminDashboard() {
     // Auth & App state
     const [verifying, setVerifying] = useState(true)
     const [adminUser, setAdminUser] = useState<Profile | null>(null)
-    const [activeTab, setActiveTab] = useState<'users' | 'content' | 'broadcast' | 'exams'>('users')
+    const [activeTab, setActiveTab] = useState<AdminTab>('users')
     const [broadcastLesson, setBroadcastLesson] = useState<{ title: string; url?: string } | null>(null)
     const [sidebarOpen, setSidebarOpen] = useState(true)
 
@@ -127,6 +130,18 @@ export default function AdminDashboard() {
         }, 4000)
     }
 
+    const handleTabChange = (tab: AdminTab) => {
+        setActiveTab(tab)
+        if (typeof window !== 'undefined') {
+            const url = new URL(window.location.href)
+            url.searchParams.set('tab', tab)
+            window.history.replaceState({}, '', url.toString())
+            if (window.innerWidth < 768) {
+                setSidebarOpen(false)
+            }
+        }
+    }
+
     // Check for direct tab query parameter on mount
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -134,6 +149,16 @@ export default function AdminDashboard() {
             const tabParam = params.get('tab')
             if (tabParam === 'broadcast' || tabParam === 'announcements') {
                 setActiveTab('broadcast')
+            } else if (tabParam === 'exams' || tabParam === 'timers') {
+                setActiveTab('exams')
+            } else if (tabParam === 'past-papers' || tabParam === 'papers') {
+                setActiveTab('past-papers')
+            } else if (tabParam === 'exam-results' || tabParam === 'results') {
+                setActiveTab('exam-results')
+            } else if (tabParam === 'content') {
+                setActiveTab('content')
+            } else if (tabParam === 'users') {
+                setActiveTab('users')
             }
         }
     }, [])
@@ -156,8 +181,9 @@ export default function AdminDashboard() {
                 }
                 if (active) {
                     setAdminUser(res.data)
-                    await fetchUsers()
-                    await fetchGrades()
+                    setVerifying(false)
+                    fetchUsers()
+                    fetchGrades()
                 }
             } catch (err) {
                 console.error("Auth check failed:", err)
@@ -675,21 +701,19 @@ export default function AdminDashboard() {
     return (
         <div className="min-h-screen bg-transparent text-slate-900 dark:text-slate-100 flex relative overflow-hidden transition-colors duration-300">
 
-            {/* Mobile Backdrop Overlay */}
-            {sidebarOpen && (
-                <div 
-                    onClick={() => setSidebarOpen(false)} 
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden" 
-                />
-            )}
-
             {/* Collapsible Sidebar */}
-            <aside className={`fixed md:relative inset-y-0 left-0 z-40 bg-white/95 dark:bg-slate-900/40 backdrop-blur-xl border-r border-slate-200/80 dark:border-white/5 transition-all duration-300 flex flex-col justify-between overflow-hidden shrink-0 ${
-                sidebarOpen ? 'w-72 translate-x-0' : 'w-0 -translate-x-full md:w-0 md:translate-x-0 border-r-0'
-            }`}>
+            <AdminSidebar
+                activeTab={activeTab}
+                isOpen={sidebarOpen}
+                onClose={() => setSidebarOpen(false)}
+                onTabChange={handleTabChange}
+                pendingUsersCount={pendingUsers.length}
+                adminName={adminUser?.full_name || 'Admin User'}
+            />
+
+            <aside className="hidden">
                 <div className="w-72 flex flex-col justify-between h-full">
                     <div>
-                        {/* Header/Logo */}
                         <div className="h-20 border-b border-slate-200/80 dark:border-white/5 flex items-center justify-between px-6">
                             <div className="flex items-center gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
@@ -756,7 +780,7 @@ export default function AdminDashboard() {
                             </button>
 
                             <Link
-                                href="/admin/past-papers"
+                                href="/admin/dashboard?tab=past-papers"
                                 className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]"
                             >
                                 <div className="flex items-center gap-3">
@@ -793,7 +817,7 @@ export default function AdminDashboard() {
                             </button>
 
                             <Link
-                                href="/admin/exam-results"
+                                href="/admin/dashboard?tab=exam-results"
                                 className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl text-sm font-semibold transition-all duration-200 group text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/[0.02]"
                             >
                                 <div className="flex items-center gap-3">
@@ -873,7 +897,7 @@ export default function AdminDashboard() {
                             </svg>
                         </button>
                         <h1 className="text-base sm:text-xl font-bold tracking-tight text-slate-900 dark:text-white capitalize truncate">
-                            {activeTab === 'users' ? 'Users Management' : activeTab === 'content' ? 'Content Library' : 'Video Announcement Studio'}
+                            {activeTab === 'users' ? 'Users Management' : activeTab === 'content' ? 'Content Library' : activeTab === 'past-papers' ? 'Past Papers Archive' : activeTab === 'exams' ? 'Exam Timers Studio' : activeTab === 'exam-results' ? 'Exam Results Management' : 'Video Announcement Studio'}
                         </h1>
                     </div>
 
@@ -891,7 +915,7 @@ export default function AdminDashboard() {
 
                 <main className="flex-1 p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-8 max-w-7xl mx-auto w-full">
                     {/* Top Stats Bar */}
-                    {activeTab !== 'broadcast' && activeTab !== 'exams' && (
+                    {activeTab !== 'broadcast' && activeTab !== 'exams' && activeTab !== 'past-papers' && activeTab !== 'exam-results' && (
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
                         {/* Card 1: Total Students */}
                         <div className="bg-white dark:bg-white/[0.02] backdrop-blur-xl border border-slate-200/80 dark:border-white/[0.05] rounded-2xl p-5 flex items-center gap-4 relative group hover:border-indigo-500/20 transition-all duration-300 shadow-sm dark:shadow-none">
@@ -1868,6 +1892,16 @@ export default function AdminDashboard() {
                     {/* ──────────────── EXAM TIMERS & COUNTDOWN STUDIO TAB ──────────────── */}
                     {activeTab === 'exams' && (
                         <ExamManagerStudio onNotify={showToast} />
+                    )}
+
+                    {/* ──────────────── PAST PAPERS ARCHIVE TAB ──────────────── */}
+                    {activeTab === 'past-papers' && (
+                        <PastPapersStudio embedded onNotify={showToast} />
+                    )}
+
+                    {/* ──────────────── EXAM RESULTS MANAGEMENT TAB ──────────────── */}
+                    {activeTab === 'exam-results' && (
+                        <ExamResultsStudio embedded onNotify={showToast} />
                     )}
                 </main>
             </div>

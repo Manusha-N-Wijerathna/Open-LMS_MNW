@@ -182,7 +182,7 @@ export default function EditPastPaperPage({
         is_published: isPublished,
       })
 
-      router.push('/admin/past-papers')
+      router.push('/admin/dashboard?tab=past-papers')
     } catch (err: unknown) {
       console.error('Failed to update past paper:', err)
       const msg =
@@ -197,7 +197,7 @@ export default function EditPastPaperPage({
     setDeleting(true)
     try {
       await api.delete(`/admin/past-papers/${id}`)
-      router.push('/admin/past-papers')
+      router.push('/admin/dashboard?tab=past-papers')
     } catch (err: unknown) {
       console.error('Failed to delete past paper:', err)
       const msg =
@@ -227,7 +227,7 @@ export default function EditPastPaperPage({
         <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <Link
-              href="/admin/past-papers"
+              href="/admin/dashboard?tab=past-papers"
               className="p-1.5 sm:p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition flex-shrink-0"
               title="Back to Past Papers"
             >
@@ -524,7 +524,7 @@ export default function EditPastPaperPage({
                   </button>
 
                   <Link
-                    href="/admin/past-papers"
+                    href="/admin/dashboard?tab=past-papers"
                     className="w-full text-center px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
                   >
                     Cancel
