@@ -77,3 +77,81 @@ export interface GradeHubCardData extends Grade {
   has_results?: boolean
 }
 
+export interface TermCardData {
+  term: string
+  slug: string
+  academic_year: number
+  total_candidates: number
+  average_marks: number
+  highest_marks: number
+  lowest_marks: number
+  passed_count: number
+  distinction_count: number
+  pass_rate: number
+  subjects: string[]
+}
+
+// Helpers for Term slugification and matching
+export function slugifyTerm(term: string): string {
+  if (!term) return 'term'
+  let s = term.toLowerCase().trim()
+  s = s.replace(/\b1st\b/g, 'first')
+       .replace(/\b2nd\b/g, 'second')
+       .replace(/\b3rd\b/g, 'third')
+       .replace(/\b4th\b/g, 'fourth')
+  return s.replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'term'
+}
+
+export function getTermSlug(term: string): string {
+  if (!term) return 'term'
+  const lower = term.toLowerCase().trim()
+  if ((lower.includes('1st') || lower.includes('first')) && lower.includes('term') && !lower.includes('2nd') && !lower.includes('3rd')) {
+    return 'first-term'
+  }
+  if ((lower.includes('2nd') || lower.includes('second')) && lower.includes('term')) {
+    return 'second-term'
+  }
+  if ((lower.includes('3rd') || lower.includes('third')) && lower.includes('term')) {
+    return 'third-term'
+  }
+  return slugifyTerm(term)
+}
+
+export function matchTerm(candidateTerm: string | undefined | null, targetSlug: string): boolean {
+  if (!candidateTerm || !targetSlug) return false
+  const c = candidateTerm.trim()
+  const genSlug = getTermSlug(c)
+  const directSlug = slugifyTerm(c)
+  const rawSlug = c.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const cleanTarget = targetSlug.toLowerCase().replace(/[^a-z0-9]/g, '')
+  const cleanCandidate = c.toLowerCase().replace(/[^a-z0-9]/g, '')
+
+  if (genSlug === targetSlug || directSlug === targetSlug || rawSlug === targetSlug) {
+    return true
+  }
+
+  if (cleanCandidate === cleanTarget) {
+    return true
+  }
+
+  // Handle ordinal normalization (e.g. "first" <-> "1st")
+  const normTarget = cleanTarget
+    .replace(/first/g, '1st')
+    .replace(/second/g, '2nd')
+    .replace(/third/g, '3rd')
+  const normCandidate = cleanCandidate
+    .replace(/first/g, '1st')
+    .replace(/second/g, '2nd')
+    .replace(/third/g, '3rd')
+
+  if (normCandidate === normTarget) return true
+  if (normCandidate.includes(normTarget) || normTarget.includes(normCandidate)) return true
+
+  // Check prefix / startsWith
+  if (genSlug.startsWith(targetSlug) || targetSlug.startsWith(genSlug)) return true
+  if (directSlug.startsWith(targetSlug) || targetSlug.startsWith(directSlug)) return true
+  if (rawSlug.startsWith(targetSlug) || targetSlug.startsWith(rawSlug)) return true
+
+  return false
+}
+

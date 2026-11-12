@@ -337,11 +337,6 @@ export function ExamCountdownSection() {
 
               {/* Card Footer Actions */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 sm:pt-4 border-t border-slate-200/80 dark:border-white/5">
-                <div className="flex items-center gap-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 self-start sm:self-auto">
-                  <Award className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                  <span>Curriculum video lessons & past papers available in portal.</span>
-                </div>
-
                 <Link
                   href="/dashboard"
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"

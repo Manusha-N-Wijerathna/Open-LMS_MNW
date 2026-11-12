@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase/admin'
 import { getCurrentUser, jsonError } from '@/lib/auth/authorization'
-import { ExamResult, GradeResultsResponse } from '@/lib/types/exam-result'
+import { ExamResult, GradeResultsResponse, matchTerm } from '@/lib/types/exam-result'
 
 export async function GET(
   request: NextRequest,
@@ -128,8 +128,16 @@ export async function GET(
       rawResults = []
     }
 
+    const { searchParams } = new URL(request.url)
+    const termFilter = searchParams.get('term')
+
+    let displayResults = rawResults
+    if (termFilter && termFilter.trim()) {
+      displayResults = rawResults.filter(r => matchTerm(r.term, termFilter.trim()))
+    }
+
     // 4. Calculate summary statistics
-    const totalSubjects = rawResults.length
+    const totalSubjects = displayResults.length
     let averageMarks = 0
     let highestMarks = 0
     let lowestMarks = 100
@@ -141,7 +149,7 @@ export async function GET(
       let scoredCount = 0
       lowestMarks = 100
 
-      rawResults.forEach((r) => {
+      displayResults.forEach((r) => {
         if (r.marks !== null && r.marks !== undefined) {
           const m = Number(r.marks)
           sum += m
@@ -180,7 +188,7 @@ export async function GET(
         display_order: grade.display_order,
         created_at: grade.created_at,
       },
-      results: rawResults,
+      results: displayResults,
       student: auth?.user ? {
         id: auth.user.id,
         full_name: auth.profile?.full_name || auth.user.email?.split('@')[0] || 'Student',

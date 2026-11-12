@@ -1,7 +1,7 @@
 [
   {
     "id": 1,
-    "title": "G.C.E. O/L Examination",
+    "title": "G.C.E. O/L Examination 2026",
     "exam_date": "2026-12-08T03:00:00.000Z",
     "duration": "2 Hours",
     "target_grade": "Grade 11",
@@ -11,12 +11,22 @@
   },
   {
     "id": 2,
-    "title": "G.C.E. A/L Examination",
+    "title": "G.C.E. A/L Examination 2027",
     "exam_date": "2027-08-01T03:00:00.000Z",
     "duration": "3 Hours",
     "target_grade": "A/L",
     "description": "National Advanced Level Information & Communication Technology Theory and Structured Examination.",
     "is_active": true,
     "created_at": "2026-10-21T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "3rd Term Test Examination 2026",
+    "exam_date": "2026-11-17T03:00:00.000Z",
+    "duration": "2 Hours",
+    "target_grade": "Grade 6 - 10",
+    "description": "School Third Term test examination",
+    "is_active": true,
+    "created_at": "2026-11-12T10:27:30.725Z"
   }
 ]

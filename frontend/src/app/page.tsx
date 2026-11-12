@@ -48,6 +48,7 @@ export default function LandingPage() {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-8">
+            
             <Link href="/past-papers" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors flex items-center gap-1.5">
               <span>Past Papers</span>
               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-500/20">Free</span>
@@ -58,9 +59,9 @@ export default function LandingPage() {
             <a href="#exam-countdown" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
               Exam Countdown
             </a>
-            <a href="#benefits" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors">
-              Curriculum
-            </a>
+            <Link href="/features" className="text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium text-sm transition-colors flex items-center gap-1.5">
+              <span>Features</span>
+            </Link>
           </nav>
 
           {/* Right Action Area (Install Button + Theme Toggle + Auth Buttons) */}
@@ -88,6 +89,14 @@ export default function LandingPage() {
             <div className="pb-1">
               <InstallButton className="w-full justify-center py-2.5 text-sm" variant="solid" />
             </div>
+            <Link
+              href="/features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-slate-700 dark:text-slate-300 font-medium py-1 flex items-center justify-between"
+            >
+              <span>Features</span>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-600 dark:text-violet-400 border border-violet-500/20">All-in-One</span>
+            </Link>
             <Link
               href="/past-papers"
               onClick={() => setMobileMenuOpen(false)}
@@ -148,7 +157,6 @@ export default function LandingPage() {
             {/* Left Content */}
             <div className="lg:col-span-6 space-y-8 text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-semibold uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5" />
                 <span>Next-Gen ICT Learning System</span>
               </div>
 
@@ -292,7 +300,7 @@ export default function LandingPage() {
             </div>
 
             <div className="p-4 rounded-2xl bg-white/[0.04] border border-white/10 backdrop-blur-sm flex items-center justify-center gap-3">
-              <Sparkles className="w-5 h-5 text-indigo-400 shrink-0" />
+              <FileText className="w-5 h-5 text-indigo-400 shrink-0" />
               <div className="text-left">
                 <p className="text-xs font-bold text-white">Model Papers</p>
                 <p className="text-[11px] text-slate-400">Target Revision Sets</p>
@@ -339,10 +347,11 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">Navigation</h4>
               <ul className="space-y-2 text-sm">
+                <li><Link href="/features" className="hover:text-white transition-colors">Platform Features</Link></li>
                 <li><Link href="/past-papers" className="hover:text-white transition-colors">Past Papers Library</Link></li>
-                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><Link href="/exam-results" className="hover:text-white transition-colors">Exam Results Hub</Link></li>
                 <li><Link href="/login" className="hover:text-white transition-colors">Student Login</Link></li>
-                <li><Link href="/register" className="hover:text-white transition-colors">Student Register</Link></li>
+                <li><Link href="/register" className="hover:text-white transition-colors">Student Register</Link></li> 
               </ul>
             </div>
             <div>
