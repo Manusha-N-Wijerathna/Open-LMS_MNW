@@ -1,17 +1,24 @@
-import { NextResponse } from 'next/server'
-import { getExams } from '@/lib/examsStorage'
+import { NextRequest, NextResponse } from 'next/server'
+import { getDbClient } from '@/lib/supabase/server'
+import { jsonError } from '@/lib/auth/authorization'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const exams = getExams()
-    // Return only active exams ordered by exam_date ascending
-    const activeExams = exams
-      .filter(e => e.is_active)
-      .sort((a, b) => new Date(a.exam_date).getTime() - new Date(b.exam_date).getTime())
+    const db = await getDbClient(request)
+    const { data, error } = await db
+      .from('exam_countdowns')
+      .select('*')
+      .eq('is_active', true)
+      .order('exam_date', { ascending: true })
 
-    return NextResponse.json(activeExams)
+    if (error) {
+      console.error('Error fetching public exam countdowns:', error)
+      return jsonError('Failed to fetch exam schedules. Check that the exam_countdowns migration has been applied.', 500)
+    }
+
+    return NextResponse.json(data || [])
   } catch (err) {
     console.error('Error fetching exams:', err)
-    return NextResponse.json({ error: 'Failed to fetch exams' }, { status: 500 })
+    return jsonError('Failed to fetch exam schedules', 500)
   }
 }
