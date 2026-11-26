@@ -54,7 +54,9 @@ export async function POST(request: NextRequest) {
     }
 
     exams.push(newExam)
-    saveExams(exams)
+    if (!saveExams(exams)) {
+      return jsonError('Failed to save exam record', 500)
+    }
 
     return NextResponse.json(newExam, { status: 201 })
   } catch (err) {
