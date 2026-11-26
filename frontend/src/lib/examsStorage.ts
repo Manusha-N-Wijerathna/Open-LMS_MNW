@@ -64,13 +64,13 @@ export function getExams(): ExamItem[] {
 }
 
 export function saveExams(exams: ExamItem[]): boolean {
-  memoryExams = exams
   try {
     const dir = path.dirname(DATA_FILE_PATH)
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true })
     }
     fs.writeFileSync(DATA_FILE_PATH, JSON.stringify(exams, null, 2), 'utf-8')
+    memoryExams = exams
     return true
   } catch (err) {
     console.warn('Could not save exams to file:', err)

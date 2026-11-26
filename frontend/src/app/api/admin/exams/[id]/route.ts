@@ -46,7 +46,9 @@ export async function PUT(
       exams[index].is_active = Boolean(is_active)
     }
 
-    saveExams(exams)
+    if (!saveExams(exams)) {
+      return jsonError('Failed to save exam changes', 500)
+    }
     return NextResponse.json(exams[index])
   } catch (err) {
     console.error('Error updating exam:', err)
@@ -76,7 +78,9 @@ export async function DELETE(
       return jsonError('Exam not found', 404)
     }
 
-    saveExams(filtered)
+    if (!saveExams(filtered)) {
+      return jsonError('Failed to save exam deletion', 500)
+    }
     return NextResponse.json({ success: true, message: 'Exam deleted successfully' })
   } catch (err) {
     console.error('Error deleting exam:', err)
