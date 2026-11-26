@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin, jsonError } from '@/lib/auth/authorization'
-import { getExams, saveExams, ExamItem } from '@/lib/examsStorage'
+import { getDbClient } from '@/lib/supabase/server'
+import { ExamCountdown } from '@/lib/types/exam-countdown'
 
 export async function GET(request: NextRequest) {
   const auth = await requireAdmin(request)
@@ -9,8 +10,18 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const exams = getExams()
-    return NextResponse.json(exams)
+    const db = await getDbClient(request)
+    const { data, error } = await db
+      .from('exam_countdowns')
+      .select('*')
+      .order('exam_date', { ascending: true })
+
+    if (error) {
+      console.error('Error fetching admin exam countdowns:', error)
+      return jsonError('Failed to fetch exam schedules. Check that the exam_countdowns migration has been applied.', 500)
+    }
+
+    return NextResponse.json(data || [])
   } catch (err) {
     console.error('Error fetching admin exams:', err)
     return jsonError('Failed to fetch exams', 500)
@@ -39,26 +50,28 @@ export async function POST(request: NextRequest) {
       return jsonError('Exam duration is required (e.g. 3 Hours)', 400)
     }
 
-    const exams = getExams()
-    const newId = exams.length > 0 ? Math.max(...exams.map(e => e.id)) + 1 : 1
-
-    const newExam: ExamItem = {
-      id: newId,
+    const newExam: Omit<ExamCountdown, 'id' | 'created_at'> = {
       title: title.trim(),
       exam_date: new Date(exam_date).toISOString(),
       duration: duration.trim(),
       target_grade: target_grade?.trim() || 'All Students',
       description: description?.trim() || '',
       is_active: is_active !== false,
-      created_at: new Date().toISOString()
     }
 
-    exams.push(newExam)
-    if (!saveExams(exams)) {
-      return jsonError('Failed to save exam record', 500)
+    const db = await getDbClient(request)
+    const { data, error } = await db
+      .from('exam_countdowns')
+      .insert(newExam)
+      .select('*')
+      .single()
+
+    if (error) {
+      console.error('Error creating exam countdown:', error)
+      return jsonError('Failed to save exam schedule. Check that the exam_countdowns migration has been applied.', 500)
     }
 
-    return NextResponse.json(newExam, { status: 201 })
+    return NextResponse.json(data, { status: 201 })
   } catch (err) {
     console.error('Error creating exam:', err)
     return jsonError('Failed to create exam record', 500)

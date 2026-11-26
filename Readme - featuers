@@ -1,0 +1,79 @@
+# Open LMS - System Features and Functions
+
+## Overview
+
+Open LMS is an online learning platform for ICT students. It brings lessons, examination resources, results, and administrator tools together in one place. The curriculum is organized for Grades 6-13, including A/L.
+
+## Student and public features
+
+### Accounts and student access
+
+- Students can register, sign in, and manage their profile.
+- Administrators review student accounts and can verify them and assign one or more grades.
+- Students can browse the grades assigned to them. Learning materials become available according to their account approval and access status.
+- Students can update their password from their profile.
+
+### Curriculum and video lessons
+
+- Learning content is organized as **Grade → Unit → Lesson**.
+- Lessons can include descriptions, thumbnails, and video links.
+- Video lessons use embedded Google Drive content.
+- Students can open a grade, choose a unit, and study its lessons.
+
+### Past papers
+
+- Visitors can browse past and model examination papers without signing in.
+- Papers can be searched and filtered by details such as exam type, medium, year, and title.
+- Paper files and marking schemes can be opened or downloaded.
+
+### Exam results
+
+- Visitors can browse published results by grade and term.
+- Student and institute names can be searched.
+- Result lists show marks and grade letters, with ranking and summary information where available.
+
+### Exam countdowns
+
+- The landing page displays active exam schedules with a live countdown.
+- Students can switch between schedules when more than one is available.
+- Each schedule can show its title, date, duration, target grade, and description.
+- Countdown schedules are stored in Supabase, separately from student exam results.
+
+### Accessibility and display
+
+- The site supports desktop and mobile layouts.
+- Users can switch between light and dark themes.
+- The site includes installable Progressive Web App (PWA) support.
+
+## Administrator features
+
+Administrators use the dashboard to manage the learning platform:
+
+- **Users:** review registered students, filter and search the user list, verify accounts, and assign grades.
+- **Content library:** create and edit grades, units, and lessons; organize their display order; and manage lesson video links and thumbnails.
+- **Bulk lesson import:** upload lesson data from a CSV file with a validation and preview workflow.
+- **Past papers:** add, edit, publish, unpublish, search, and remove papers and their associated files or marking schemes.
+- **Exam timers:** create, edit, activate or hide, and delete countdown schedules.
+- **Exam results:** manage grades and exam records, enter and update student results, and remove records.
+- **Video announcements:** prepare and publish video announcements for students.
+- **Banner studio:** create and preview announcement banners for the student portal.
+
+The administrator dashboard groups these tools into tabs, so administrators can move between user, content, paper, timer, results, and announcement management.
+
+## Main areas of the site
+
+- **Home:** public landing page and active exam countdowns.
+- **Features:** overview of platform capabilities.
+- **Register / Sign in:** student account access.
+- **Dashboard:** assigned curriculum and learning resources.
+- **Past Papers:** public examination paper archive.
+- **Exam Results:** public published results.
+- **Admin Dashboard:** protected management tools for administrators.
+
+## Exam countdown storage setup
+
+The countdown feature uses the Supabase table `public.exam_countdowns`. Apply
+`supabase/migrations/20261126000000_create_exam_countdowns.sql` to the Supabase
+project before using the countdown APIs. The migration creates the table,
+access policies, and initial schedules.
+

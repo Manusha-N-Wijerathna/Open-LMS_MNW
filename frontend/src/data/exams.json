@@ -18,5 +18,15 @@
     "description": "National Advanced Level Information & Communication Technology Theory and Structured Examination.",
     "is_active": true,
     "created_at": "2026-10-21T00:00:00.000Z"
+  },
+  {
+    "id": 3,
+    "title": "G.C.E O/L Examination 2027",
+    "exam_date": "2027-12-08T03:00:00.000Z",
+    "duration": "2 Hours",
+    "target_grade": "Grade 11",
+    "description": "National Ordinary Level General Examination for Information & Communication Technology.",
+    "is_active": true,
+    "created_at": "2026-11-26T15:14:28.274Z"
   }
 ]
